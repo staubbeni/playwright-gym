@@ -282,6 +282,7 @@ await expect(page).toHaveURL(/\\/shop\\/cart$/);`,
       {
         title: "Protected redirect",
         goal: "Open /shop/account while logged out and assert that you are redirected to /shop/login and see the \"Sign in\" heading.",
+        hint: "The redirect adds a query string (/shop/login?next=/shop/account), so match the URL with a regex such as /\\/shop\\/login/ instead of an exact string.",
         partial: "```\nawait page.goto(\"/shop/account\");\n// now assert the URL and the \"Sign in\" heading\n```",
         difficulty: "challenge"
       }

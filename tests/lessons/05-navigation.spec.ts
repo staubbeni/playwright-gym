@@ -23,4 +23,6 @@ test("practice 3: protected redirect", async ({ page }) => {
   await page.goto("/shop");
   // TODO (challenge): Open /shop/account while logged out and assert that you
   // are redirected to /shop/login and see the "Sign in" heading.
+  // Hint: the URL gets a query string (?next=/shop/account), so match it with
+  // a regex such as /\/shop\/login/ rather than an exact string.
 });
