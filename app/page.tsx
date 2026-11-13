@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StartButton } from "@/components/start-button";
 import { lessonNumber, lessons, modules } from "@/lib/lessons";
 
 export default function HomePage() {
@@ -12,7 +13,7 @@ export default function HomePage() {
           A checker proves that every test you write catches a real, planted bug.
         </p>
         <div className="button-row">
-          <Link className="primary-button" href={`/lessons/${lessons[0].id}`}>Start with lesson 01</Link>
+          <StartButton items={lessons.map((lesson) => ({ id: lesson.id, number: lessonNumber(lesson), practices: lesson.practices.length }))} />
           <Link className="secondary-button" href="/shop">Open the Gym Shop</Link>
         </div>
       </header>
