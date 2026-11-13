@@ -53,3 +53,18 @@ test("every lesson page and playground renders", async ({ page }) => {
     }
   }
 });
+
+test("the guide switches to the Python track and remembers it", async ({ page }) => {
+  await page.goto("/lessons/03-selectors");
+  const guide = page.locator("#lesson-instructions");
+  await guide.getByRole("button", { name: "Python" }).click();
+  await expect(guide.getByRole("button", { name: "Python" })).toHaveAttribute("aria-pressed", "true");
+  await expect(guide.getByText('page.get_by_role("button", name="Complete action")', { exact: true })).toBeVisible();
+  await expect(guide.locator(".command-block")).toContainText("npm run check -- 03-selectors --python");
+  await expect(guide.getByRole("link", { name: "Continue to lesson 04 →" })).toHaveAttribute("href", "/lessons/04-forms");
+
+  await page.reload();
+  await expect(guide.getByRole("button", { name: "Python" })).toHaveAttribute("aria-pressed", "true");
+  await guide.getByRole("button", { name: "TypeScript" }).click();
+  await expect(guide.locator(".command-block")).toContainText("npx playwright test tests/solutions/03-selectors.spec.ts");
+});

@@ -9,8 +9,10 @@ These files are also the course's own test suite:
 
 ```bash
 npm run check:all -- --examples
+npm run check:all -- --examples --python   # the *_test.py Python versions
 ```
 
 proves that every practice passes against the normal app and fails when its
 planted bug is switched on. Screenshot baselines for lesson 22 are created
-locally on the first run and are not committed (they are platform-specific).
+locally on the first run and are not committed (they are platform-specific;
+the Python ones live in `__snapshots__/`).

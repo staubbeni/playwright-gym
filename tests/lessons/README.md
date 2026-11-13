@@ -17,5 +17,16 @@ Lessons 20, 21 and 29 use page objects. Copy the `pages/` folder once:
 cp -r tests/lessons/pages tests/solutions/
 ```
 
+Python: the same starters exist as `<id>_test.py` (see the Python track in the
+main README):
+
+```bash
+cp tests/lessons/03_selectors_test.py tests/solutions/
+.venv/bin/pytest tests/solutions/03_selectors_test.py
+npm run check -- 03-selectors --python
+```
+
+The Python page objects are `pages/catalog_page.py` and `pages/cart_page.py`.
+
 A starter may "pass" before you've written anything, because a test without
 assertions passes. That's exactly what the checker's bug-mode run catches.

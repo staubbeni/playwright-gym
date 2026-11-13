@@ -46,6 +46,34 @@ checker:
 Lessons 20, 21 and 29 also use page objects: copy `tests/lessons/pages/` to
 `tests/solutions/pages/` once.
 
+## Python track
+
+Every lesson also has a Python version (pytest-playwright, sync API). Switch
+the lesson guide to **Python** for Python examples, hints and commands.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/playwright install chromium
+```
+
+```bash
+mkdir -p tests/solutions
+cp tests/lessons/03_selectors_test.py tests/solutions/
+.venv/bin/pytest tests/solutions/03_selectors_test.py --headed
+npm run check -- 03-selectors --python
+```
+
+Name each test (or test class) `test_practice_N_…` / `TestPractice_N_…`. The
+checker runs the same static, normal and bug-mode checks as for TypeScript;
+it uses `.venv/bin/python` when present, otherwise `$PYTHON` or `python3`.
+`tests/conftest.py` sets the base URL, forwards `GYM_BUG` on every browser
+and API context, and adds two fixtures: `api_request_context` (lesson 16) and
+`assert_snapshot` (lesson 22, since Python has no `toHaveScreenshot`). A few
+lessons teach the Python equivalent of a TypeScript-only feature: fixtures and
+marks instead of `test.extend` and tags, `parametrize` instead of loops, and a
+deadline loop instead of `toPass()`.
+
 ## Curriculum
 
 | Module | Lessons |
@@ -80,7 +108,8 @@ Planted bugs are switched on by flags such as `03-selectors:2`:
   stored in a cookie, so it survives navigation.
 - In tests, set `GYM_BUG`: `GYM_BUG=03-selectors:2 npx playwright test ...`.
   `playwright.config.ts` forwards it as the `x-gym-bug` header on every
-  request, including the `request` fixture.
+  request, including the `request` fixture. For Python, `tests/conftest.py`
+  does the same.
 
 Gym Shop defects are listed by name in `lib/shop/defects.ts`.
 
@@ -93,6 +122,7 @@ tested:
 ```bash
 npm run check -- 06-locator-strategy --examples   # one lesson
 npm run check:all -- --examples                     # every lesson, every bug
+npm run check:all -- --examples --python            # the Python track
 ```
 
 ## Project layout
@@ -100,6 +130,7 @@ npm run check:all -- --examples                     # every lesson, every bug
 | Path | What |
 | --- | --- |
 | `lib/lessons/` | Lesson content and checker rubrics, one file per module |
+| `lib/lessons/python/` | Python examples, hints and rubrics per lesson |
 | `components/playgrounds/` | One playground per lesson, plus `registry.ts` |
 | `components/shop/`, `app/shop/`, `app/api/shop/` | The Gym Shop |
 | `lib/bug.ts`, `middleware.ts` | Bug flag resolution |
@@ -108,6 +139,7 @@ npm run check:all -- --examples                     # every lesson, every bug
 | `tests/solutions/` | Your solutions (gitignored) |
 | `tests/examples/` | Reference solutions |
 | `tests/app/` | The project's own regression tests (`npm run test:e2e`) |
+| `tests/conftest.py`, `pytest.ini`, `requirements.txt` | Python track setup |
 
 ## Adding a lesson
 
@@ -117,4 +149,7 @@ npm run check:all -- --examples                     # every lesson, every bug
    `target` at a Gym Shop page and add defects to `lib/shop/defects.ts`.
 3. Gate each practice's bug with `useLessonBugs(id)` → `bug(N)`.
 4. Add a starter in `tests/lessons/` and a reference in `tests/examples/`.
-5. `npm run check -- <id> --examples` must report every practice complete.
+5. Add the Python entry in `lib/lessons/python/0X-*.ts` (the app refuses to
+   load without one), plus `<id>_test.py` starter and reference.
+6. `npm run check -- <id> --examples` and `... --examples --python` must
+   report every practice complete.

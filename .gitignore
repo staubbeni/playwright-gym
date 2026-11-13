@@ -35,3 +35,8 @@ Thumbs.db
 
 # Screenshot baselines are platform-specific; the checker creates them locally
 tests/examples/*-snapshots/
+
+# Python track
+.venv/
+__pycache__/
+tests/**/__snapshots__/

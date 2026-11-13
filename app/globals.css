@@ -303,3 +303,8 @@ details summary { color: var(--accent-strong); cursor: pointer; font-size: .85re
 }
 .stuck-button { background: none; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); cursor: pointer; font-size: .82rem; padding: .25rem .6rem; }
 .stuck-button:hover { color: inherit; }
+
+.language-switch { border: 1px solid var(--line); border-radius: 999px; display: inline-flex; padding: 2px; }
+.language-switch button { background: none; border: 0; border-radius: 999px; color: var(--muted); cursor: pointer; font-size: .75rem; padding: .25rem .7rem; }
+.language-switch button[aria-pressed="true"] { background: var(--accent); color: #0b101a; font-weight: 700; }
+.language-switch button:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 1px; }

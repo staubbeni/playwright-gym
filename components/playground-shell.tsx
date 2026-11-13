@@ -6,17 +6,18 @@ import { useLessonBugs } from "@/components/bug-provider";
 import { playgrounds } from "@/components/playgrounds/registry";
 import { ShopLauncher } from "@/components/playgrounds/shop-launcher";
 import { RichText } from "@/components/rich-text";
+import { type Language, useLanguage } from "@/components/use-language";
 import { useProgress } from "@/components/use-progress";
-import { getLesson, lessonNumber, lessons, modules, nextLesson, practiceFlag } from "@/lib/lessons";
+import { getLesson, lessonNumber, lessons, modules, nextLesson, practiceFlag, pythonFile, pythonLesson } from "@/lib/lessons";
 import type { Practice } from "@/lib/lessons/types";
 
 // Help in three clicks, so a learner sees the smallest nudge first.
-function StuckLadder({ lessonId, practice }: { lessonId: string; practice: Practice }) {
+function StuckLadder({ lessonId, practice, language }: { lessonId: string; practice: Practice; language: Language }) {
   const [step, setStep] = useState(0);
   const steps = [
     <p key="hint"><RichInline text={practice.hint ?? "Reread the goal and name the one thing to click and the one thing to assert."} /></p>,
     practice.partial && <RichText key="partial" text={practice.partial} />,
-    <p key="example">Full solution: <code>tests/examples/{lessonId}.spec.ts</code></p>
+    <p key="example">Full solution: <code>tests/examples/{language === "python" ? pythonFile(lessonId) : `${lessonId}.spec.ts`}</code></p>
   ].filter(Boolean);
   return (
     <div className="stuck">
@@ -31,9 +32,11 @@ function StuckLadder({ lessonId, practice }: { lessonId: string; practice: Pract
 }
 
 export function PlaygroundShell({ lessonId }: { lessonId: string }) {
-  const lesson = getLesson(lessonId) ?? lessons[0];
+  const baseLesson = getLesson(lessonId) ?? lessons[0];
+  const [language, setLanguage] = useLanguage();
+  const lesson = language === "python" ? pythonLesson(baseLesson) : baseLesson;
   const bug = useLessonBugs(lesson.id);
-  const next = nextLesson(lesson);
+  const next = nextLesson(baseLesson);
   const Playground = playgrounds[lesson.id];
   const { progress, toggle } = useProgress();
   const [showInstructions, setShowInstructions] = useState(true);
@@ -143,6 +146,13 @@ export function PlaygroundShell({ lessonId }: { lessonId: string }) {
             <button className="drawer-resize-handle" onPointerDown={() => { resizing.current = true; }} type="button" aria-label="Resize lesson instructions" />
             <div className="drawer-header">
               <p className="eyebrow">Lesson guide</p>
+              <div className="language-switch" role="group" aria-label="Test language">
+                {(["ts", "python"] as const).map((option) => (
+                  <button key={option} type="button" aria-pressed={language === option} onClick={() => setLanguage(option)}>
+                    {option === "ts" ? "TypeScript" : "Python"}
+                  </button>
+                ))}
+              </div>
             </div>
             <article className="instructions">
               <div className="instruction-section">
@@ -183,7 +193,7 @@ export function PlaygroundShell({ lessonId }: { lessonId: string }) {
                           <span className={`difficulty ${practice.difficulty}`}>{practice.difficulty}</span>
                         </div>
                         <p><RichInline text={practice.goal} /></p>
-                        <StuckLadder lessonId={lesson.id} practice={practice} />
+                        <StuckLadder key={language} lessonId={lesson.id} practice={practice} language={language} />
                         <label className="checkbox-row">
                           <input type="checkbox" checked={Boolean(progress[key])} onChange={() => toggle(key)} />
                           Mark as done
@@ -195,9 +205,9 @@ export function PlaygroundShell({ lessonId }: { lessonId: string }) {
               </div>
               <div className="instruction-section">
                 <p className="eyebrow">Workflow</p>
-                <pre className="command-block"><code>{commands(lesson.id)}</code></pre>
+                <pre className="command-block"><code>{commands(lesson.id, language)}</code></pre>
                 <p className="muted small">
-                  Name each test <code>practice N: …</code>. The checker runs practice N normally (it must pass) and with
+                  Name each test {language === "python" ? <code>test_practice_N_…</code> : <code>practice N: …</code>}. The checker runs practice N normally (it must pass) and with
                   bug flag <code>{lesson.id}:N</code> (it must fail).
                 </p>
               </div>
@@ -239,7 +249,14 @@ function RichInline({ text }: { text: string }) {
   );
 }
 
-function commands(id: string) {
+function commands(id: string, language: Language) {
+  if (language === "python") {
+    return [
+      `cp tests/lessons/${pythonFile(id)} tests/solutions/`,
+      `pytest tests/solutions/${pythonFile(id)}`,
+      `npm run check -- ${id} --python`
+    ].join("\n");
+  }
   return [
     `cp tests/lessons/${id}.spec.ts tests/solutions/`,
     `npx playwright test tests/solutions/${id}.spec.ts`,

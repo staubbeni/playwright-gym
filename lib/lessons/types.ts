@@ -19,6 +19,27 @@ export type Practice = {
   rubric?: Rubric;
 };
 
+// Python (pytest-playwright, sync API) version of a lesson. Prose that is not
+// overridden is shown with camelCase API names converted (see python/view.ts).
+export type PythonPractice = {
+  goal?: string;
+  hint?: string;
+  partial?: string;
+  rubric?: Rubric;
+};
+
+export type PythonLesson = {
+  theory?: string;
+  learningGoals?: string[];
+  goodExample: string;
+  badExample: string;
+  commonMistakes?: string[];
+  prerequisites?: string[];
+  concepts?: string[];
+  // One entry per practice, same order as Lesson.practices.
+  practices: PythonPractice[];
+};
+
 export type Lesson = {
   id: string;
   module: ModuleId;
@@ -35,6 +56,7 @@ export type Lesson = {
   // Where the learner's tests point: "/play/<id>" or a Gym Shop page.
   target: string;
   practices: Practice[];
+  python?: PythonLesson;
   concepts: string[];
   resources: { label: string; url: string }[];
   prerequisites?: string[];
