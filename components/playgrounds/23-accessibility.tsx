@@ -8,13 +8,21 @@ export default function AccessibilityPlayground() {
   const bug = useLessonBugs("23-accessibility");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
-  const [error, setError] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [errors, setErrors] = useState({ email: "", message: "" });
   const emailRef = useRef<HTMLInputElement>(null);
-  const focusBroken = bug(2);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const focusStays = bug("2.1");
+  const focusLost = bug("2.2");
 
   useEffect(() => {
-    if (dialogOpen && !focusBroken) emailRef.current?.focus();
-  }, [dialogOpen, focusBroken]);
+    if (dialogOpen && !focusStays) emailRef.current?.focus();
+  }, [dialogOpen, focusStays]);
+
+  const closeDialog = (viaEscape: boolean) => {
+    setDialogOpen(false);
+    if (!(viaEscape && focusLost)) triggerRef.current?.focus();
+  };
 
   return (
     <PlaygroundCard lessonId="23-accessibility" title="Community site">
@@ -30,21 +38,21 @@ export default function AccessibilityPlayground() {
         )}
       </nav>
       <Panel title="Newsletter">
-        <button className="secondary-button" type="button" onClick={() => setDialogOpen(true)}>Subscribe to newsletter</button>
+        <button ref={triggerRef} className="secondary-button" type="button" onClick={() => setDialogOpen(true)}>Subscribe to newsletter</button>
         {dialogOpen && (
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="newsletter-title"
             className="result-panel"
-            onKeyDown={(event) => event.key === "Escape" && setDialogOpen(false)}
+            onKeyDown={(event) => event.key === "Escape" && closeDialog(true)}
           >
             <h4 id="newsletter-title">Newsletter</h4>
             <label>
               Email
               <input ref={emailRef} type="email" />
             </label>
-            <button className="secondary-button" type="button" onClick={() => setDialogOpen(false)}>Close</button>
+            <button className="secondary-button" type="button" onClick={() => closeDialog(false)}>Close</button>
           </div>
         )}
       </Panel>
@@ -54,7 +62,10 @@ export default function AccessibilityPlayground() {
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
-            setError(contactEmail.trim() ? "" : "Contact email is required.");
+            setErrors({
+              email: contactEmail.trim() ? "" : "Contact email is required.",
+              message: contactMessage.trim().length >= 10 ? "" : "Message must be at least 10 characters."
+            });
           }}
         >
           <label htmlFor="contact-email">Contact email</label>
@@ -62,10 +73,19 @@ export default function AccessibilityPlayground() {
             id="contact-email"
             value={contactEmail}
             onChange={(event) => setContactEmail(event.target.value)}
-            aria-invalid={error ? "true" : "false"}
-            aria-describedby={error && !bug(3) ? "contact-email-error" : undefined}
+            aria-invalid={errors.email && !bug("3.1") ? "true" : "false"}
+            aria-describedby={errors.email && !bug("3.2") ? "contact-email-error" : undefined}
           />
-          {error && <p id="contact-email-error" className="error-text">{error}</p>}
+          {errors.email && <p id="contact-email-error" className="error-text" role={bug("3.3") ? undefined : "alert"}>{errors.email}</p>}
+          <label htmlFor="contact-message">Your message</label>
+          <textarea
+            id="contact-message"
+            value={contactMessage}
+            onChange={(event) => setContactMessage(event.target.value)}
+            aria-invalid={errors.message && !bug("3.1") ? "true" : "false"}
+            aria-describedby={errors.message && !bug("3.2") ? "contact-message-error" : undefined}
+          />
+          {errors.message && <p id="contact-message-error" className="error-text" role={bug("3.3") ? undefined : "alert"}>{errors.message}</p>}
           <button className="primary-button" type="submit">Send message</button>
         </form>
       </Panel>

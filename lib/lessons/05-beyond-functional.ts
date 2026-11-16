@@ -29,21 +29,29 @@ Visual tests catch what functional assertions miss (colors, spacing, overlap) bu
     practices: [
       {
         title: "Element screenshot",
-        goal: "Assert toHaveScreenshot(\"pricing-card.png\") on the pricing-card test id.",
+        goal: "Guard the pricing card with an element screenshot named \"pricing-card.png\". The first run writes the baseline and fails: run again.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /toHaveScreenshot\(/, message: "Use toHaveScreenshot()." }] }
       },
       {
         title: "Mask live data",
-        goal: "Screenshot the dashboard-header test id while masking the live-stats element.",
+        goal: "Guard the dashboard header with a screenshot. It contains live numbers that change every second, so the test must pass on every run without hiding the rest of the header.",
         difficulty: "independent",
+        hint: "Pass the changing element to the `mask` option as a locator. The mask paints a solid box over it.",
         rubric: { requires: [{ pattern: /mask:\s*\[/, message: "Mask the dynamic element." }] }
       },
       {
-        title: "Stable full page",
-        goal: "Take a fullPage screenshot with animations disabled and live-stats masked.",
+        title: "Fix the flaky page test",
+        goal: "The starter's full-page screenshot test is flaky. Run it a few times and find out why (two things move on this page), then stabilize it so it passes every time and still fails when the plan name changes. If you add a tolerance, explain it in a comment.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /animations:\s*["']disabled["']/, message: "Disable animations." }] }
+        hint: "An endless animation never settles, and live text never matches the baseline. Freeze one, mask the other. `maxDiffPixelRatio` is only for tiny anti-aliasing noise: a big value hides real changes.",
+        rubric: {
+          requires: [
+            { pattern: /animations:\s*["']disabled["']/, message: "Disable animations." },
+            { pattern: /mask:\s*\[/, message: "Mask the live data." }
+          ],
+          forbids: [{ pattern: /maxDiffPixelRatio:\s*(0?\.0[5-9]|0?\.[1-9]|1)/, message: "A tolerance this large would hide a changed plan name." }]
+        }
       }
     ],
     concepts: ["Baselines", "Masks", "Animations", "Thresholds"],
@@ -83,21 +91,37 @@ Dialogs must move focus inside (\`toBeFocused()\`) and close with Escape. Error 
     practices: [
       {
         title: "ARIA snapshot",
-        goal: "Assert that the navigation \"Main\" matches an ARIA snapshot with links Home, Shop and Account.",
+        goal: "Prove the main navigation is exposed to assistive technology with all three of its links, each with an accessible name.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /toMatchAriaSnapshot\(/, message: "Use toMatchAriaSnapshot()." }] }
       },
       {
         title: "Dialog focus",
-        goal: "Click \"Subscribe to newsletter\", assert the dialog \"Newsletter\" is visible and its Email field is focused, press Escape, and assert the dialog is hidden.",
+        goal: "Open the newsletter dialog and prove keyboard users are looked after: focus moves into the dialog, and after Escape closes it focus is back where it started.",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /toBeFocused\(/, message: "Use toBeFocused()." }] }
+        hint: "`toBeFocused()` is a web-first assertion. Assert it twice: once on the field inside the dialog, once on the button that opened it.",
+        bugs: ["Focus stays behind when the dialog opens", "Focus is lost after Escape closes the dialog"],
+        rubric: {
+          requires: [
+            { pattern: /toBeFocused\(/, message: "Use toBeFocused()." },
+            { pattern: /Escape[\s\S]*toBeFocused\(/, message: "Assert focus again after pressing Escape." }
+          ]
+        }
       },
       {
-        title: "Accessible errors",
-        goal: "Click \"Send message\" with an empty form. Assert that \"Contact email\" has aria-invalid=\"true\" and the accessible description \"Contact email is required.\".",
+        title: "Announced errors",
+        goal: "Submit the empty contact form and prove both errors are really announced to assistive technology, not just visible: each field is marked invalid and its description is its error text. Find everything by role or label.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /toHaveAccessibleDescription\(/, message: "Use toHaveAccessibleDescription()." }] }
+        hint: "Error text that appears is only announced when it is a live region (role \"alert\"); Next.js adds an empty alert of its own, so narrow yours down by text. `toHaveAttribute(\"aria-invalid\", ...)` and `toHaveAccessibleDescription()` cover the rest.",
+        bugs: ["Fields are never marked invalid", "Errors aren't linked to their fields", "Errors aren't announced as alerts"],
+        rubric: {
+          requires: [
+            { pattern: /toHaveAccessibleDescription\(/, message: "Use toHaveAccessibleDescription()." },
+            { pattern: /aria-invalid/, message: "Check aria-invalid." },
+            { pattern: /getByRole\(\s*["']alert["']/, message: "Find the announced errors with getByRole(\"alert\")." }
+          ],
+          forbids: [{ pattern: /getByTestId\(|\.locator\(|getByText\(/, message: "Use roles and labels only: that is how assistive technology finds things." }]
+        }
       }
     ],
     concepts: ["Accessibility tree", "Focus management", "aria-describedby"],
@@ -135,21 +159,37 @@ Set options *before* the page is created, which is what \`test.use\` does. Chang
     practices: [
       {
         title: "Freeze time",
-        goal: "Set the fixed time to 2026-03-01T08:00:00, open the page, and assert the greeting \"Good morning\".",
+        goal: "Pin the browser's clock to 08:00 on 1 March 2026 and prove the greeting for that time. The clock must be set before the page loads.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /page\.clock\./, message: "Use page.clock." }] }
       },
       {
         title: "Locale and timezone",
-        goal: "In a describe with test.use({ locale: \"de-DE\", timezoneId: \"Europe/Berlin\" }) assert the price matches /1\\.234,50/ and the event time is \"14:00\".",
+        goal: "Pretend the visitor is in Berlin with a German browser. Prove the membership price uses German formatting (1.234,50) and that the event, which is 12:00 UTC, shows Berlin's local time. Set the environment once for the group of tests, not in the middle of a test.",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /locale:\s*["']de-DE["']/, message: "Emulate the de-DE locale." }] }
+        hint: "`test.use({ locale, timezoneId })` inside a `test.describe`. The price contains a non-breaking space: match it with a regex.",
+        bugs: ["The price ignores the locale", "The event time ignores the timezone"],
+        rubric: {
+          requires: [
+            { pattern: /locale:\s*["']de-DE["']/, message: "Emulate the de-DE locale." },
+            { pattern: /timezoneId:\s*["']Europe\/Berlin["']/, message: "Emulate the Berlin timezone." }
+          ]
+        }
       },
       {
-        title: "Phone with geolocation",
-        goal: "Use a 390×844 viewport and geolocation 47.4979, 19.0402 (with permission). Assert the \"Open menu\" button is visible, then click \"Find nearest gym\" and assert \"Nearest gym: Budapest Central\".",
+        title: "Timeouts on a phone",
+        goal: "As a phone user (390×844) in Budapest (47.4979, 19.0402), prove the mobile menu button exists and the nearest gym is found. Then prove the session timeout: the page warns about inactivity, so check the expiry notice is NOT shown just before the limit, IS shown right after it, and that \"Stay signed in\" restarts the countdown. Never wait in real time.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /geolocation:/, message: "Emulate geolocation." }] }
+        hint: "The notice is a role \"alert\" (Next.js adds an empty one too: filter by text). `page.clock.install()` before `goto`, then `page.clock.fastForward(\"14:00\")`. The countdown starts when the page hydrates, so wait for something the page fills in before you fast-forward. Fast-forwarding in two steps tests both sides of the limit. After clicking \"Stay signed in\", run the same two checks again. Geolocation needs `permissions: [\"geolocation\"]`.",
+        bugs: ["The session expires too early", "Stay signed in doesn't restart the countdown", "The gym finder confuses latitude and longitude"],
+        rubric: {
+          requires: [
+            { pattern: /geolocation:/, message: "Emulate geolocation." },
+            { pattern: /clock\.install\(/, message: "Install the fake clock with page.clock.install()." },
+            { pattern: /fastForward\(/, message: "Jump time forward with fastForward()." }
+          ],
+          forbids: [{ pattern: /waitForTimeout\(/, message: "Never wait in real time: fast-forward the clock." }]
+        }
       }
     ],
     concepts: ["page.clock", "Locale & timezone", "Viewport", "Geolocation"],

@@ -16,6 +16,9 @@ test("practice 2: the dashboard header with live data masked", async ({ page }) 
 
 test("practice 3: the whole page is stable", async ({ page }) => {
   await expect(page.getByTestId("pricing-card")).toBeVisible();
+  // The spinner never stops (freeze it) and the live numbers differ every
+  // second (mask them). No tolerance needed: a threshold would also hide a
+  // changed plan name.
   await expect(page).toHaveScreenshot("pricing-page.png", {
     fullPage: true,
     animations: "disabled",

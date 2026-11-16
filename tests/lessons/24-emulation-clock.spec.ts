@@ -1,33 +1,40 @@
 // Lesson 24 — Emulation & clock
-// Freeze the clock for the greeting, format prices in German, and use a phone
-// viewport with geolocation.
+// Freeze the clock for the greeting, format prices for Berlin, and test a
+// session timeout on a phone without waiting.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 24-emulation-clock
 import { expect, test } from "@playwright/test";
 
 test("practice 1: freeze time", async ({ page }) => {
-  // TODO (guided): page.clock.setFixedTime(new Date("2026-03-01T08:00:00"))
-  // BEFORE goto, then assert the greeting "Good morning".
+  // TODO (guided): Pin the clock to 08:00 on 1 March 2026 BEFORE goto and
+  // prove the greeting for that time.
   await page.goto("/play/24-emulation-clock");
 });
 
 test.describe("practice 2: German locale", () => {
-  // TODO (independent): test.use({ locale: "de-DE", timezoneId: "Europe/Berlin" });
+  // TODO (independent): set the environment for the whole group with test.use.
 
   test("formats prices and times for Berlin", async ({ page }) => {
     await page.goto("/play/24-emulation-clock");
-    // TODO: assert the price matches /1\.234,50/ and the event time is "14:00".
+    // TODO: prove German price formatting (1.234,50) and that the event at
+    // 12:00 UTC shows Berlin's local time.
   });
 });
 
 test.describe("practice 3: phone in Budapest", () => {
-  // TODO (challenge): test.use({ viewport: { width: 390, height: 844 },
-  //   geolocation: { latitude: 47.4979, longitude: 19.0402 }, permissions: ["geolocation"] });
+  // TODO (challenge): test.use a 390x844 viewport, geolocation 47.4979 /
+  // 19.0402 and the permission it needs.
 
   test("shows the mobile menu and the nearest gym", async ({ page }) => {
     await page.goto("/play/24-emulation-clock");
-    // TODO: assert "Open menu" is visible, click "Find nearest gym", and assert
-    // "Nearest gym: Budapest Central".
+    // TODO: the mobile menu button exists; the nearest gym is found.
+  });
+
+  test("warns about session timeout", async ({ page }) => {
+    // TODO: install a fake clock BEFORE goto. Prove the expiry notice is NOT
+    // shown just before the limit, IS shown right after, and that "Stay signed
+    // in" restarts the countdown. Never wait in real time.
+    await page.goto("/play/24-emulation-clock");
   });
 });

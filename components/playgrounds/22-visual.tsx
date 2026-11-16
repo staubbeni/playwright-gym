@@ -23,7 +23,7 @@ export default function VisualPlayground() {
     <PlaygroundCard lessonId="22-visual" title="Pricing page">
       <div className={`dashboard-header ${bug(2) ? "shifted" : ""}`} data-testid="dashboard-header">
         <strong>Gym Cloud dashboard</strong>
-        <span data-testid="live-stats">Updated {now} · {visitors} visitors online</span>
+        <span data-testid="live-stats" style={{ display: "inline-block", minWidth: 330, textAlign: "right" }}>Updated {now} · {visitors} visitors online</span>
       </div>
       <div className={`pricing-card ${bug(1) ? "off-brand" : ""}`} data-testid="pricing-card">
         <p className="eyebrow">Most popular</p>
