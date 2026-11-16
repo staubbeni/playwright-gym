@@ -30,7 +30,7 @@ test("the guide shows concepts, practices, docs, and the next lesson", async ({ 
   await page.goto("/lessons/03-selectors");
   const guide = page.locator("#lesson-instructions");
   await expect(guide.getByText("Role locators")).toBeVisible();
-  await expect(guide.getByText("2. Icon-only button", { exact: true })).toBeVisible();
+  await expect(guide.getByText("2. Two controls, no CSS", { exact: true })).toBeVisible();
   await expect(guide.getByRole("link", { name: "Locators", exact: true })).toHaveAttribute("href", "https://playwright.dev/docs/locators");
   await expect(guide.getByRole("link", { name: "Continue to lesson 04 →" })).toHaveAttribute("href", "/lessons/04-forms");
 });
