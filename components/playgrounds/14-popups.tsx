@@ -6,7 +6,7 @@ import { PlaygroundCard } from "./card";
 
 export default function PopupsPlayground() {
   const bug = useLessonBugs("14-popups");
-  const ignoreApproval = bug(2);
+  const ignoreApproval = bug("2.1");
   const [status, setStatus] = useState("Payment not started.");
 
   useEffect(() => {
@@ -33,7 +33,13 @@ export default function PopupsPlayground() {
         >
           Open payment window
         </button>
-        <a className="secondary-button" href={bug(3) ? "/popup/payment" : "/popup/terms"} target="_blank" rel="noopener">
+        <a
+          className="secondary-button"
+          href={bug("3.1") ? "/popup/payment" : "/popup/terms"}
+          target="_blank"
+          rel="noopener"
+          onClick={() => bug("3.2") && setStatus("Payment not started.")}
+        >
           Read the terms
         </a>
       </div>

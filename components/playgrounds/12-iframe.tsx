@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLessonBugs } from "@/components/bug-provider";
 import { PlaygroundCard } from "./card";
 
-function frameDocument(confirms: boolean, validates: boolean) {
+function frameDocument(confirms: boolean, validates: boolean, validatesExpiry: boolean) {
   return `<!doctype html><html><head><style>
 body{background:#121a29;color:#e8eef8;font-family:Arial,sans-serif;padding:16px;margin:0}
 label{display:block;font-size:13px;margin-top:8px}input{display:block;margin:6px 0;padding:8px;width:220px}
@@ -22,6 +22,8 @@ document.querySelector("form").addEventListener("submit", function (event) {
   var card = document.querySelector("#card").value.replace(/\\s/g, "");
   var error = document.querySelector("#error");
   if (${validates} && !/^\\d{16}$/.test(card)) { error.textContent = "Card number must be 16 digits."; return; }
+  var expiry = document.querySelector("#expiry").value;
+  if (${validatesExpiry} && !/^(0[1-9]|1[0-2])\\/\\d{2}$/.test(expiry)) { error.textContent = "Expiry must be MM/YY."; return; }
   error.textContent = "";
   if (!${confirms}) return;
   document.querySelector("#result").textContent = "Payment confirmed.";
@@ -32,8 +34,9 @@ document.querySelector("form").addEventListener("submit", function (event) {
 
 export default function IframePlayground() {
   const bug = useLessonBugs("12-iframe");
-  const ignoreMessages = bug(3);
+  const ignoreMessages = bug("3.1");
   const [orderStatus, setOrderStatus] = useState("Awaiting payment.");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -46,7 +49,17 @@ export default function IframePlayground() {
   return (
     <PlaygroundCard lessonId="12-iframe" title="Checkout with embedded payment" intro="The card form is a separate document inside an iframe, like a payment provider's widget.">
       <p className="result-panel" role="status" data-testid="order-status">{orderStatus}</p>
-      <iframe className="demo-frame" title="Payment form" srcDoc={frameDocument(!bug(1), !bug(2))} />
+      <button
+        className="secondary-button"
+        type="button"
+        onClick={() => {
+          setAttempt(attempt + 1);
+          if (!bug("3.2")) setOrderStatus("Awaiting payment.");
+        }}
+      >
+        Start over
+      </button>
+      <iframe key={attempt} className="demo-frame" title="Payment form" srcDoc={frameDocument(!bug(1), !bug("2.1"), !bug("2.2"))} />
     </PlaygroundCard>
   );
 }

@@ -12,15 +12,33 @@ frame.get_by_label("Card number").fill("4242424242424242")`,
       "Only asserting inside the frame and missing a broken host page."
     ],
     practices: [
-      { rubric: { requires: [{ pattern: /frame_locator\(|content_frame/, message: "Scope to the frame." }] } },
-      {},
-      {}
+      {
+        rubric: { requires: [{ pattern: /content_frame|frame_locator\(/, message: "Scope your locators to the frame with content_frame or frame_locator()." }] }
+      },
+      {
+        goal: "The frame validates both fields. Prove that card number 1234 is rejected with \"Card number must be 16 digits.\" and that a valid card with expiry 13/99 is rejected with \"Expiry must be MM/YY.\"."
+      },
+      {
+        goal: "Pay successfully and prove both the frame (\"Payment confirmed.\") and the host page (\"Order paid.\") agree. Then click the host's \"Start over\" button and prove the frame is back to \"Ready for payment.\" and the host to \"Awaiting payment.\".",
+        hint: "Start over reloads the frame: take a fresh locator or reuse the frame locator, which re-resolves."
+      }
     ]
   },
   "13-shadow-dom": {
     goodExample: `page.get_by_label("Display name").fill("Grace Hopper")`,
     badExample: `page.evaluate("document.querySelector('user-settings').shadowRoot.querySelector('input').value = 'x'")`,
-    practices: [{}, { rubric: { requires: [{ pattern: /select_option\(/, message: "Use select_option()." }] } }, {}]
+    practices: [
+      {},
+      {
+        goal: "Both fields live in the shadow root. In one test choose Theme \"Dark\", set the name \"Grace Hopper\", save once, and prove both saved lines.",
+        rubric: { requires: [{ pattern: /select_option\(/, message: "Use select_option() for the theme." }] }
+      },
+      {
+        goal: "The avatar is a component inside the component. Save \"Grace Hopper\" and prove the avatar shows GH; then save \"Plato\" and prove it shows P. Find it by its accessible name: no shadow-piercing selectors.",
+        hint: "get_by_label(\"Avatar\") already sees through open shadow roots. to_have_text is exact, so the case matters.",
+        rubric: { forbids: [{ pattern: />>|css=|shadow_root|\.locator\(/, message: "Use get_by_label/get_by_role: Playwright pierces open shadow roots for you." }] }
+      }
+    ]
   },
   "14-popups": {
     theory: `A popup or a \`target="_blank"\` link opens a new **Page** in the same browser context. Wrap the click in \`page.expect_popup()\`, so Playwright is listening before the event can fire:
@@ -43,9 +61,19 @@ expect(page.get_by_text("Payment window")).to_be_visible()  # wrong page`,
       "Forgetting that the popup may close itself, so popup locators fail afterwards."
     ],
     practices: [
-      { rubric: { requires: [{ pattern: /expect_popup\(|expect_page\(/, message: "Wait for the popup with expect_popup()." }] } },
-      {},
-      {}
+      {
+        rubric: { requires: [{ pattern: /expect_popup\(/, message: "Wrap the click in page.expect_popup()." }] }
+      },
+      {
+        goal: "In the popup click \"Approve payment\". Prove the original page says \"Payment approved.\" and that the popup closed itself.",
+        hint: "Start listening for the popup's close event before the click that triggers it: `with popup.expect_event(\"close\"):`, or popup.is_closed() inside a retry loop.",
+        rubric: { requires: [{ pattern: /close|is_closed/, message: "Prove the popup closed." }] }
+      },
+      {
+        goal: "Open the payment popup (don't approve it) and, in the same test, the terms link. Prove the terms tab has the URL /popup/terms and the heading \"Terms of service\", and that the opener still says \"Waiting for approval...\" afterwards.",
+        hint: "Each window is its own Page object. Wait for each popup separately with its own expect_popup() and assert on the right page.",
+        rubric: { requires: [{ pattern: /expect_popup\([\s\S]*expect_popup\(/, message: "Wait for each popup separately." }] }
+      }
     ]
   },
   "15-network-mocking": {

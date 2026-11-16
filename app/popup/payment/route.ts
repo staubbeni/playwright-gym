@@ -1,3 +1,5 @@
+import { isBug } from "@/lib/bug-server";
+
 // A plain HTML page (no React), like a third-party payment provider's window.
 const html = `<!doctype html>
 <html lang="en">
@@ -17,6 +19,8 @@ document.getElementById("approve").addEventListener("click", function () {
 </body>
 </html>`;
 
-export function GET() {
-  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+export function GET(request: Request) {
+  // 14-popups:2.2 leaves the popup open after approval.
+  const body = isBug(request, ["14-popups:2.2"]) ? html.replace("  window.close();\n", "") : html;
+  return new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }

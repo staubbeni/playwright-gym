@@ -14,15 +14,44 @@ test("practice 1: runs a command from the palette", async ({ page }) => {
   await expect(page.getByTestId("command-result")).toHaveText("Opened: Cart");
 });
 
-test("practice 2: shows a tooltip on hover", async ({ page }) => {
-  await page.getByRole("button", { name: "About the Pro plan" }).hover();
-  await expect(page.getByRole("tooltip")).toHaveText("Includes unlimited projects.");
+test("practice 2: shows and dismisses the tooltip", async ({ page }) => {
+  const info = page.getByRole("button", { name: "About the Pro plan" });
+  const tooltip = page.getByRole("tooltip");
+
+  await info.hover();
+  await expect(tooltip).toHaveText("Includes unlimited projects.");
+
+  await page.mouse.move(0, 0);
+  await expect(tooltip).toBeHidden();
+
+  await info.hover();
+  await expect(tooltip).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toBeHidden();
 });
 
-test("practice 3: drags a card to Done", async ({ page }) => {
+test("practice 3: drags a card and uses the move menus", async ({ page }) => {
   const todo = page.getByRole("list", { name: "To do" });
+  const review = page.getByRole("list", { name: "In review" });
   const done = page.getByRole("list", { name: "Done" });
+
+  // Drag handlers exist only after hydration.
+  await expect(page.getByText("Keyboard shortcuts ready")).toBeVisible();
   await todo.getByText("Write tests").dragTo(done);
+  await expect(done.getByText("Write tests")).toBeVisible();
+  await expect(todo.getByText("Write tests")).toHaveCount(0);
+
+  const moveCard = async (card: string, target: string) => {
+    await page.getByLabel("Card").selectOption(card);
+    await page.getByLabel("Move to").selectOption(target);
+    await page.getByRole("button", { name: "Move card" }).click();
+  };
+  await moveCard("Review PR", "In review");
+  await expect(review.getByText("Review PR")).toBeVisible();
+  await expect(todo.getByText("Review PR")).toHaveCount(0);
+
+  // Cards only move forward.
+  await moveCard("Write tests", "To do");
   await expect(done.getByText("Write tests")).toBeVisible();
   await expect(todo.getByText("Write tests")).toHaveCount(0);
 });

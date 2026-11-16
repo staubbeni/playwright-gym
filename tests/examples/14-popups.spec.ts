@@ -11,18 +11,28 @@ test("practice 1: opens the payment popup", async ({ page }) => {
   await expect(popup.getByRole("heading", { name: "Payment window" })).toBeVisible();
 });
 
-test("practice 2: approval is reported to the opener", async ({ page }) => {
+test("practice 2: approval is reported and the popup closes", async ({ page }) => {
   const popupPromise = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Open payment window" }).click();
   const popup = await popupPromise;
+
+  const closed = popup.waitForEvent("close");
   await popup.getByRole("button", { name: "Approve payment" }).click();
+  await closed;
   await expect(page.getByRole("status")).toHaveText("Payment approved.");
 });
 
-test("practice 3: opens the terms in a new tab", async ({ page }) => {
-  const pagePromise = page.waitForEvent("popup");
+test("practice 3: handles two windows at once", async ({ page }) => {
+  const paymentPromise = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "Open payment window" }).click();
+  const payment = await paymentPromise;
+  await expect(payment.getByRole("heading", { name: "Payment window" })).toBeVisible();
+
+  const termsPromise = page.waitForEvent("popup");
   await page.getByRole("link", { name: "Read the terms" }).click();
-  const terms = await pagePromise;
+  const terms = await termsPromise;
   await expect(terms).toHaveURL(/\/popup\/terms$/);
   await expect(terms.getByRole("heading", { name: "Terms of service" })).toBeVisible();
+
+  await expect(page.getByRole("status")).toHaveText("Waiting for approval...");
 });

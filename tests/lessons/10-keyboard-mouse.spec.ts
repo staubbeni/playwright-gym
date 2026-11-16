@@ -1,6 +1,6 @@
 // Lesson 10 — Keyboard, hover & drag
-// Open the command palette with a shortcut, read a hover tooltip, and move a
-// kanban card.
+// Drive a command palette with a shortcut, show and dismiss a tooltip, and move a
+// card across a board.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 10-keyboard-mouse
@@ -8,21 +8,24 @@ import { expect, test } from "@playwright/test";
 
 test("practice 1: keyboard shortcut", async ({ page }) => {
   await page.goto("/play/10-keyboard-mouse");
-  // TODO (guided): Press ControlOrMeta+K, type "cart" in the Command field,
-  // press Enter, and assert "Opened: Cart".
-  // Hint: Global shortcuts only work once the page's JavaScript is running.
-  // Wait for "Keyboard shortcuts ready" before pressing keys: page-level key
-  // presses have no element to auto-wait for.
+  // TODO (guided): press ControlOrMeta+K, type "cart" in the Command field, press
+  // Enter, and assert "Opened: Cart".
+  // Hint: wait for "Keyboard shortcuts ready" first. page.keyboard has no
+  // element to auto-wait for.
 });
 
-test("practice 2: hover tooltip", async ({ page }) => {
+test("practice 2: tooltip, show and dismiss", async ({ page }) => {
   await page.goto("/play/10-keyboard-mouse");
-  // TODO (independent): Hover the button "About the Pro plan" and assert the
-  // tooltip "Includes unlimited projects.".
+  // TODO (independent): hover "About the Pro plan" and assert the tooltip
+  // "Includes unlimited projects.". Move the mouse away and assert it is gone.
+  // Hover again, press Escape, and assert it is gone again.
 });
 
-test("practice 3: drag and drop", async ({ page }) => {
+test("practice 3: drag through the board", async ({ page }) => {
   await page.goto("/play/10-keyboard-mouse");
-  // TODO (challenge): Drag "Write tests" from To do into the Done list. Assert
-  // that it is in Done and no longer in To do.
+  // TODO (challenge): drag "Write tests" from To do into Done and assert it is
+  // only in Done. Then use the "Move card" form (Card, Move to) to move "Review PR"
+  // to In review, and try to move "Write tests" back to To do: assert the board
+  // refuses. Wait for "Keyboard shortcuts ready" first,
+  // or the first drag fires before the page is interactive.
 });

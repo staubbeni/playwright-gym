@@ -30,17 +30,20 @@ await frame.getByLabel("Card number").fill("4242424242424242");`,
         title: "Pay inside the frame",
         goal: "Fill Card number 4242424242424242 and Expiry 12/30, click Pay now, and assert \"Payment confirmed.\" inside the frame.",
         difficulty: "guided",
-        rubric: { requires: [{ pattern: /frameLocator\(|contentFrame\(/, message: "Scope to the frame." }] }
+        rubric: { requires: [{ pattern: /contentFrame\(|frameLocator\(/, message: "Scope your locators to the frame with contentFrame() or frameLocator()." }] }
       },
       {
         title: "Validation inside the frame",
-        goal: "Submit card number 1234 and assert the frame alert \"Card number must be 16 digits.\".",
-        difficulty: "independent"
+        goal: "The frame validates both fields. Prove that card number 1234 is rejected with \"Card number must be 16 digits.\" and that a valid card with expiry 13/99 is rejected with \"Expiry must be MM/YY.\".",
+        difficulty: "independent",
+        bugs: ["A short card number is accepted", "A malformed expiry is accepted"]
       },
       {
-        title: "Frame to host communication",
-        goal: "After a successful payment assert that the host page status (outside the frame) says \"Order paid.\".",
-        difficulty: "challenge"
+        title: "Frame and host talk",
+        goal: "Pay successfully and prove both the frame (\"Payment confirmed.\") and the host page (\"Order paid.\") agree. Then click the host's \"Start over\" button and prove the frame is back to \"Ready for payment.\" and the host to \"Awaiting payment.\".",
+        difficulty: "challenge",
+        hint: "Start over reloads the frame: take a fresh locator or reuse the frame locator, which re-resolves.",
+        bugs: ["The host ignores the payment message", "Start over doesn't reset the host's status"]
       }
     ],
     concepts: ["FrameLocator", "contentFrame", "postMessage"],
@@ -77,15 +80,19 @@ Components often report changes through custom events that the host page renders
         difficulty: "guided"
       },
       {
-        title: "Select inside the component",
-        goal: "Choose Theme \"Dark\", save, and assert \"Saved theme: dark\".",
+        title: "Name and theme together",
+        goal: "Both fields live in the shadow root. In one test choose Theme \"Dark\", set the name \"Grace Hopper\", save once, and prove both saved lines.",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /selectOption\(/, message: "Use selectOption()." }] }
+        bugs: ["The name isn't saved", "The theme isn't saved"],
+        rubric: { requires: [{ pattern: /selectOption\(/, message: "Use selectOption() for the theme." }] }
       },
       {
-        title: "Nested component",
-        goal: "After saving \"Grace Hopper\" assert that the element with accessible name \"Avatar\" shows \"GH\".",
-        difficulty: "challenge"
+        title: "Avatar initials",
+        goal: "The avatar is a component inside the component. Save \"Grace Hopper\" and prove the avatar shows GH; then save \"Plato\" and prove it shows P. Find it by its accessible name: no shadow-piercing selectors.",
+        difficulty: "challenge",
+        hint: "getByLabel(\"Avatar\") already sees through open shadow roots. toHaveText is exact, so the case matters.",
+        bugs: ["The initials don't update after saving", "The initials come out lowercase"],
+        rubric: { forbids: [{ pattern: />>|css=|shadowRoot|\.locator\(/, message: "Use getByLabel/getByRole: Playwright pierces open shadow roots for you." }] }
       }
     ],
     concepts: ["Open shadow roots", "Custom elements", "Custom events"],
@@ -125,17 +132,23 @@ await expect(page.getByText("Payment window")).toBeVisible(); // wrong page`,
         title: "Catch the popup",
         goal: "Click \"Open payment window\" and assert the popup heading \"Payment window\".",
         difficulty: "guided",
-        rubric: { requires: [{ pattern: /waitForEvent\(["']popup["']\)|waitForEvent\(["']page["']\)/, message: "Wait for the popup event." }] }
+        rubric: { requires: [{ pattern: /waitForEvent\(["']popup/, message: "Wait for the popup event before clicking." }] }
       },
       {
-        title: "Report back to the opener",
-        goal: "In the popup click \"Approve payment\", then assert the original page says \"Payment approved.\".",
-        difficulty: "independent"
+        title: "Approve and close",
+        goal: "In the popup click \"Approve payment\". Prove the original page says \"Payment approved.\" and that the popup closed itself.",
+        difficulty: "independent",
+        hint: "Start listening for the popup's close event before the click that triggers it: popup.waitForEvent(\"close\") or popup.isClosed() in a retrying assertion.",
+        bugs: ["The opener never hears about the approval", "The popup stays open after approving"],
+        rubric: { requires: [{ pattern: /close|isClosed/, message: "Prove the popup closed." }] }
       },
       {
-        title: "New tab link",
-        goal: "Click \"Read the terms\" (target=_blank) and assert the new page URL ends in /popup/terms and its heading is \"Terms of service\".",
-        difficulty: "challenge"
+        title: "Two windows at once",
+        goal: "Open the payment popup (don't approve it) and, in the same test, the terms link. Prove the terms tab has the URL /popup/terms and the heading \"Terms of service\", and that the opener still says \"Waiting for approval...\" afterwards.",
+        difficulty: "challenge",
+        hint: "Each window is its own Page object. Wait for each popup event separately and assert on the right page.",
+        bugs: ["The terms link opens the payment window", "Opening the terms resets the payment status"],
+        rubric: { requires: [{ pattern: /waitForEvent\(["']popup[\s\S]*waitForEvent\(["']popup/, message: "Wait for each popup separately." }] }
       }
     ],
     concepts: ["Page events", "Popups", "Multiple pages"],

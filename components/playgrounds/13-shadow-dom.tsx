@@ -7,7 +7,7 @@ import { PlaygroundCard } from "./card";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "user-settings": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { "stale-initials"?: string };
+      "user-settings": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { "stale-initials"?: string; "lower-initials"?: string };
     }
   }
 }
@@ -16,7 +16,7 @@ function defineElements() {
   if (customElements.get("user-settings")) return;
 
   class AvatarBadge extends HTMLElement {
-    static observedAttributes = ["name"];
+    static observedAttributes = ["name", "lower"];
     connectedCallback() {
       if (!this.shadowRoot) {
         this.attachShadow({ mode: "open" }).innerHTML =
@@ -33,7 +33,7 @@ function defineElements() {
       const initials = (this.getAttribute("name") ?? "")
         .split(/\s+/)
         .filter(Boolean)
-        .map((part) => part[0].toUpperCase())
+        .map((part) => (this.hasAttribute("lower") ? part[0].toLowerCase() : part[0].toUpperCase()))
         .join("");
       target.textContent = initials;
       target.setAttribute("aria-label", "Avatar");
@@ -61,6 +61,7 @@ function defineElements() {
           </label>
           <button type="submit">Save settings</button>
         </form>`;
+      if (this.hasAttribute("lower-initials")) root.querySelector("avatar-badge")?.setAttribute("lower", "");
       root.querySelector("form")?.addEventListener("submit", (event) => {
         event.preventDefault();
         const name = (root.querySelector("input") as HTMLInputElement).value;
@@ -77,8 +78,8 @@ function defineElements() {
 
 export default function ShadowDomPlayground() {
   const bug = useLessonBugs("13-shadow-dom");
-  const nameBroken = bug(1);
-  const themeBroken = bug(2);
+  const nameBroken = bug(1) || bug("2.1");
+  const themeBroken = bug("2.2");
   const [savedName, setSavedName] = useState("Ada");
   const [savedTheme, setSavedTheme] = useState("light");
   const ref = useRef<HTMLElement>(null);
@@ -97,7 +98,7 @@ export default function ShadowDomPlayground() {
 
   return (
     <PlaygroundCard lessonId="13-shadow-dom" title="User settings component" intro="The form below is a web component. Its inputs and the avatar live in shadow roots.">
-      <user-settings ref={ref} {...(bug(3) ? { "stale-initials": "" } : {})} />
+      <user-settings ref={ref} {...(bug("3.1") ? { "stale-initials": "" } : {})} {...(bug("3.2") ? { "lower-initials": "" } : {})} />
       <p className="result-panel" data-testid="saved-name">Saved name: {savedName}</p>
       <p className="result-panel" data-testid="saved-theme">Saved theme: {savedTheme}</p>
     </PlaygroundCard>

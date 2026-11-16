@@ -280,21 +280,35 @@ await expect(page.getByText("Preferences saved.")).toBeVisible();`,
       {
         title: "Keyboard shortcut",
         goal: "Press ControlOrMeta+K, type \"cart\" in the Command field, press Enter, and assert \"Opened: Cart\".",
-        difficulty: "guided",
         hint: "Global shortcuts only work once the page's JavaScript is running. Wait for \"Keyboard shortcuts ready\" before pressing keys: page-level key presses have no element to auto-wait for.",
-        rubric: { requires: [{ pattern: /press\(/, message: "Use press() for the shortcut." }] }
+        difficulty: "guided",
+        rubric: { requires: [{ pattern: /press\(/, message: "Send the shortcut with press()." }] }
       },
       {
-        title: "Hover tooltip",
-        goal: "Hover the button \"About the Pro plan\" and assert the tooltip \"Includes unlimited projects.\".",
+        title: "Tooltip: show and dismiss",
+        goal: "Hover the \"About the Pro plan\" button and prove the tooltip \"Includes unlimited projects.\" shows. Then prove it goes away when the mouse leaves, and, after hovering again, when you press Escape.",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /\.hover\(/, message: "Use hover()." }] }
+        hint: "Move the pointer elsewhere with page.mouse.move(0, 0) or by hovering another element. keyboard.press(\"Escape\") works on the page.",
+        bugs: ["The tooltip never shows", "The tooltip stays when the mouse leaves", "Escape doesn't dismiss the tooltip"],
+        rubric: {
+          requires: [
+            { pattern: /\.hover\(/, message: "Use hover()." },
+            { pattern: /Escape/, message: "Press Escape to dismiss it." }
+          ]
+        }
       },
       {
-        title: "Drag and drop",
-        goal: "Drag \"Write tests\" from To do into the Done list. Assert that it is in Done and no longer in To do.",
+        title: "Drag through the board",
+        goal: "Drag \"Write tests\" from To do into Done and prove it is only in Done. Below the board is a form for keyboard users (Card, Move to, \"Move card\"): use it to move \"Review PR\" to In review, then try to move \"Write tests\" back to To do and prove the board refuses.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /dragTo\(/, message: "Use dragTo()." }] }
+        hint: "dragTo(target) fires the real drag events and selectOption() drives the form. After each move assert both lists: where the card is, and where it is no longer. Drag handlers only exist after hydration: wait for \"Keyboard shortcuts ready\" first, or the first drag silently does nothing.",
+        bugs: ["Dropping into Done does nothing", "A moved card is copied, not moved", "A card can be dragged backwards"],
+        rubric: {
+          requires: [
+            { pattern: /dragTo\(/, message: "Use dragTo()." },
+            { pattern: /selectOption\(/, message: "Use the move form with selectOption()." }
+          ]
+        }
       }
     ],
     concepts: ["press / keyboard", "hover", "dragTo"],
@@ -337,19 +351,28 @@ const download = await page.waitForEvent("download"); // may miss the event`,
         title: "Confirm dialog",
         goal: "Accept the dialog opened by \"Delete account\" (assert its message contains \"cannot be undone\") and assert \"Account deleted.\".",
         difficulty: "guided",
-        rubric: { requires: [{ pattern: /["']dialog["']/, message: "Handle the dialog event." }] }
+        rubric: { requires: [{ pattern: /dialog/, message: "Handle the dialog event." }] }
       },
       {
-        title: "Upload a file",
-        goal: "Upload an in-memory avatar.png through \"Upload avatar\" and assert the text starts with \"Uploaded avatar.png\".",
+        title: "Upload, with rules",
+        goal: "Upload an in-memory avatar.png and prove the status reads exactly \"Uploaded avatar.png (14 bytes)\" for the content \"fake-png-bytes\". Then upload a notes.txt and prove it is refused with \"Only image files are allowed.\".",
         difficulty: "independent",
+        hint: "setInputFiles({ name, mimeType, buffer }) builds a file without touching the disk. The mime type is what the app checks.",
+        bugs: ["The upload is ignored", "Non-image files are accepted", "The reported size is wrong"],
         rubric: { requires: [{ pattern: /setInputFiles\(/, message: "Use setInputFiles()." }] }
       },
       {
-        title: "Inspect a download",
-        goal: "Download via \"Export CSV\". Assert the filename is report.csv and the content starts with \"id,name,score\".",
+        title: "Download, then import it back",
+        goal: "Download via \"Export CSV\" and prove the filename is report.csv and the file starts with \"id,name,score\" and has both rows (Ada, Grace). Then import that same downloaded file with \"Import CSV\" and prove the page says \"Imported 2 rows.\".",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /["']download["']/, message: "Wait for the download event." }] }
+        hint: "download.path() gives the saved file: read it with fs, and pass the same path to setInputFiles().",
+        bugs: ["The file is named export.txt", "The report is missing a row", "The import counts the header as a row"],
+        rubric: {
+          requires: [
+            { pattern: /waitForEvent\(["']download|download/, message: "Capture the download event." },
+            { pattern: /setInputFiles\(/, message: "Import the downloaded file with setInputFiles()." }
+          ]
+        }
       }
     ],
     concepts: ["Dialog events", "setInputFiles", "Download events"],

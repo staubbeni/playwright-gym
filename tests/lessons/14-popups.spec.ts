@@ -1,6 +1,5 @@
 // Lesson 14 — Popups & new tabs
-// Open and approve a payment popup, then follow a link that opens in a new
-// tab.
+// Catch a popup, finish a flow in it, and juggle two windows.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 14-popups
@@ -8,18 +7,20 @@ import { expect, test } from "@playwright/test";
 
 test("practice 1: catch the popup", async ({ page }) => {
   await page.goto("/play/14-popups");
-  // TODO (guided): Click "Open payment window" and assert the popup heading
-  // "Payment window".
+  // TODO (guided): click "Open payment window" and assert the popup heading
+  // "Payment window". Hint: page.waitForEvent("popup") BEFORE the click.
 });
 
-test("practice 2: report back to the opener", async ({ page }) => {
+test("practice 2: approve and close", async ({ page }) => {
   await page.goto("/play/14-popups");
-  // TODO (independent): In the popup click "Approve payment", then assert the
-  // original page says "Payment approved.".
+  // TODO (independent): in the popup click "Approve payment". Assert the
+  // original page says "Payment approved." and that the popup closed itself.
 });
 
-test("practice 3: new tab link", async ({ page }) => {
+test("practice 3: two windows at once", async ({ page }) => {
   await page.goto("/play/14-popups");
-  // TODO (challenge): Click "Read the terms" (target=_blank) and assert the
-  // new page URL ends in /popup/terms and its heading is "Terms of service".
+  // TODO (challenge): open the payment popup (don't approve) and, in the same
+  // test, click "Read the terms". Assert the terms tab (URL /popup/terms,
+  // heading "Terms of service") and that the opener still says "Waiting for
+  // approval..." afterwards.
 });

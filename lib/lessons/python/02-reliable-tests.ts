@@ -133,8 +133,26 @@ expect(page.get_by_text("Preferences saved.")).to_be_visible()`,
     badExample: `page.mouse.move(412, 233); page.mouse.down()  # pixel coordinates`,
     practices: [
       { rubric: { requires: [{ pattern: /press\(/, message: "Send the shortcut with press()." }] } },
-      { rubric: { requires: [{ pattern: /\.hover\(/, message: "Use hover()." }] } },
-      { rubric: { requires: [{ pattern: /drag_to\(/, message: "Use drag_to()." }] } }
+      {
+        goal: "Hover the \"About the Pro plan\" button and prove the tooltip \"Includes unlimited projects.\" shows. Then prove it goes away when the mouse leaves, and, after hovering again, when you press Escape.",
+        hint: "Move the pointer elsewhere with page.mouse.move(0, 0) or by hovering another element. keyboard.press(\"Escape\") works on the page.",
+        rubric: {
+          requires: [
+            { pattern: /\.hover\(/, message: "Use hover()." },
+            { pattern: /Escape/, message: "Press Escape to dismiss it." }
+          ]
+        }
+      },
+      {
+        goal: "Drag \"Write tests\" from To do into Done and prove it is only in Done. Below the board is a form for keyboard users (Card, Move to, \"Move card\"): use it to move \"Review PR\" to In review, then try to move \"Write tests\" back to To do and prove the board refuses.",
+        hint: "drag_to(target) fires the real drag events and select_option() drives the form. After each move assert both lists: where the card is, and where it is no longer. Drag handlers only exist after hydration: wait for \"Keyboard shortcuts ready\" first, or the first drag silently does nothing.",
+        rubric: {
+          requires: [
+            { pattern: /drag_to\(/, message: "Use drag_to()." },
+            { pattern: /select_option\(/, message: "Use the move form with select_option()." }
+          ]
+        }
+      }
     ]
   }
 ,
@@ -155,9 +173,22 @@ download = download_info.value`,
     badExample: `page.get_by_role("button", name="Export CSV").click()
 download = page.wait_for_event("download")  # may miss the event`,
     practices: [
-      { rubric: { requires: [{ pattern: /["']dialog["']/, message: "Handle the \"dialog\" event." }] } },
-      { rubric: { requires: [{ pattern: /set_input_files\(/, message: "Use set_input_files()." }] } },
-      { rubric: { requires: [{ pattern: /expect_download\(|["']download["']/, message: "Wait for the download with expect_download()." }] } }
+      { rubric: { requires: [{ pattern: /dialog/, message: "Handle the dialog event." }] } },
+      {
+        goal: "Upload an in-memory avatar.png and prove the status reads exactly \"Uploaded avatar.png (14 bytes)\" for the content b\"fake-png-bytes\". Then upload a notes.txt and prove it is refused with \"Only image files are allowed.\".",
+        hint: "set_input_files(files={\"name\": ..., \"mimeType\": ..., \"buffer\": ...}) builds a file without touching the disk. The mime type is what the app checks.",
+        rubric: { requires: [{ pattern: /set_input_files\(/, message: "Use set_input_files()." }] }
+      },
+      {
+        goal: "Download via \"Export CSV\" and prove the filename is report.csv and the file starts with \"id,name,score\" and has both rows (Ada, Grace). Then import that same downloaded file with \"Import CSV\" and prove the page says \"Imported 2 rows.\".",
+        hint: "download.path() gives the saved file: read it with open(), and pass the same path to set_input_files().",
+        rubric: {
+          requires: [
+            { pattern: /expect_download\(/, message: "Capture the download with expect_download()." },
+            { pattern: /set_input_files\(/, message: "Import the downloaded file with set_input_files()." }
+          ]
+        }
+      }
     ]
   }
 };
