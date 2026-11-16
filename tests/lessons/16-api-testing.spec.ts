@@ -1,5 +1,5 @@
 // Lesson 16 — API testing
-// Check the products endpoint, seed a cart through the API, and verify login
+// Check the products contract, seed a cart through the API, and pin down the
 // error responses.
 //
 // Copy this file to tests/solutions/ before editing, then run:
@@ -7,18 +7,21 @@
 import { expect, test } from "@playwright/test";
 
 test("practice 1: get and assert json", async ({ request }) => {
-  // TODO (guided): GET /api/shop/products with request.get(). Assert status 200,
-  // total 12, and that some item is named "Steel Kettlebell".
+  // TODO (guided): GET the product list with request.get(). Prove the contract:
+  // success status, the right total, and that the Steel Kettlebell is in it.
   // Hint: expect(body.items).toContainEqual(expect.objectContaining({ ... }))
 });
 
 test("practice 2: seed via api, verify in ui", async ({ page }) => {
-  // TODO (independent): POST { productId: "yoga-mat", quantity: 2 } to
-  // /api/shop/cart with page.request (it shares cookies with page!), then open
-  // /shop/cart and assert quantity 2 and the total "$58.00".
+  // TODO (independent): put two Yoga Mats in the cart with page.request (it
+  // shares cookies with the page, `request` does not!), then open the cart
+  // page and prove the UI shows that quantity and the matching total.
 });
 
-test("practice 3: negative api test", async ({ request }) => {
-  // TODO (challenge): POST wrong credentials to /api/shop/login → 401 and
-  // { error: "Invalid username or password." }; student / playwright → 200.
+test("practice 3: negative contract", async ({ request }) => {
+  // TODO (challenge): a wrong password, an unknown product added to the cart,
+  // and a product page for an unknown id each answer with their own status and
+  // error body: assert all three. Then assert a valid login and a real
+  // product are OK (expect(response).toBeOK()) and have the right shape
+  // (toMatchObject).
 });

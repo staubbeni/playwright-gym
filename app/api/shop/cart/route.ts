@@ -27,7 +27,11 @@ export function GET(request: Request) {
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { productId?: string; quantity?: number };
   const product = body.productId ? findProduct(body.productId) : undefined;
-  if (!product) return Response.json({ error: "Unknown product." }, { status: 400 });
+  if (!product) {
+    return defectActive("cartAcceptsUnknownProduct", request)
+      ? Response.json(summary(request), { status: 201 })
+      : Response.json({ error: "Unknown product." }, { status: 400 });
+  }
   const quantity = defectActive("cartPostIgnoresQuantity", request) ? 1 : Math.max(1, Number(body.quantity ?? 1));
   const session = sessionFor(request);
   const line = session.cart.find((item) => item.productId === product.id);

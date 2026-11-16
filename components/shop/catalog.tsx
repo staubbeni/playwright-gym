@@ -20,6 +20,9 @@ export function Catalog() {
   const neverLoads = useDefect("catalogNeverLoads");
   const ignoresResponse = useDefect("ignoresApiResponse");
   const errorAsEmpty = useDefect("errorShownAsEmpty");
+  const abortAsEmpty = useDefect("abortShownAsEmpty");
+  const noEmptyMessage = useDefect("emptyMessageMissing");
+  const queryDropped = useDefect("queryNotSent");
   const freeAsZero = useDefect("freeShownAsZero");
   const saleBadgeMissing = useDefect("saleBadgeMissing");
   const addsWrongProduct = useDefect("addsWrongProduct");
@@ -29,7 +32,7 @@ export function Catalog() {
     if (neverLoads) return;
     const controller = new AbortController();
     setLoading(true);
-    const params = new URLSearchParams({ q: query, category, sort, page: String(page) });
+    const params = new URLSearchParams({ q: queryDropped ? "" : query, category, sort, page: String(page) });
     fetch(`/api/shop/products?${params}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(String(response.status));
@@ -45,7 +48,9 @@ export function Catalog() {
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
-        if (errorAsEmpty) {
+        // An HTTP error reaches us as Error("500"); a network failure as a TypeError.
+        const httpError = reason instanceof Error && /^\d+$/.test(reason.message);
+        if (httpError ? errorAsEmpty : abortAsEmpty) {
           setResult({ items: [], total: 0, page: 1, pages: 1 });
           setError(false);
         } else {
@@ -55,7 +60,7 @@ export function Catalog() {
         console.warn("Catalog request failed", reason);
       });
     return () => controller.abort();
-  }, [query, category, sort, page, neverLoads, ignoresResponse, errorAsEmpty]);
+  }, [query, category, sort, page, neverLoads, ignoresResponse, errorAsEmpty, abortAsEmpty, queryDropped]);
 
   const addToCart = async (item: Item) => {
     const target = addsWrongProduct && result ? result.items[0] : item;
@@ -110,7 +115,7 @@ export function Catalog() {
       {error && (
         <p className="error-text" role="alert">Could not load products. Please try again.</p>
       )}
-      {result && !error && result.items.length === 0 && !loading && <p>No products found.</p>}
+      {result && !error && result.items.length === 0 && !loading && !noEmptyMessage && <p>No products found.</p>}
       {result && !error && (
         <div className="product-grid">
           {result.items.map((item) => {
