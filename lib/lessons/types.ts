@@ -67,6 +67,8 @@ export type Lesson = {
   check?: {
     repeatEach?: number;
     snapshots?: boolean;
+    // `--grep <tag>` (pytest: `-m <tag without @>`) must select exactly practice N's tests.
+    tag?: { name: string; practice: number };
     // Capstone: the whole spec runs once per flag and must catch at least `minCaught`.
     capstone?: { minCaught: number };
   };

@@ -151,7 +151,7 @@ function flatten(suite: JsonSuite, prefix: string[], out: RunResult["tests"]) {
   for (const child of suite.suites ?? []) flatten(child, path, out);
 }
 
-function runSpec(specPath: string, options: { bug?: string; grep?: string; repeatEach?: number; updateSnapshots?: boolean } = {}): RunResult {
+function runSpec(specPath: string, options: { bug?: string; grep?: string; mark?: string; repeatEach?: number; updateSnapshots?: boolean } = {}): RunResult {
   const cliArgs = ["playwright", "test", specPath, "--reporter=json", "--retries=0"];
   if (options.grep) cliArgs.push("--grep", options.grep);
   if (options.repeatEach) cliArgs.push(`--repeat-each=${options.repeatEach}`);
@@ -184,7 +184,7 @@ const unescapeXml = (text: string) =>
 
 // Same result shape as runSpec, from pytest's JUnit XML. Output carries the
 // first failure as `"message": "..."` so errorSummary() works unchanged.
-function runPytest(specPath: string, options: { bug?: string; grep?: string; repeatEach?: number; updateSnapshots?: boolean } = {}): RunResult {
+function runPytest(specPath: string, options: { bug?: string; grep?: string; mark?: string; repeatEach?: number; updateSnapshots?: boolean } = {}): RunResult {
   const runs = options.repeatEach ?? 1;
   const merged: RunResult = { exitCode: 0, tests: [], output: "" };
   const dir = mkdtempSync(join(tmpdir(), "gym-pytest-"));
@@ -193,6 +193,7 @@ function runPytest(specPath: string, options: { bug?: string; grep?: string; rep
       const report = join(dir, `report-${run}.xml`);
       const cliArgs = ["-m", "pytest", specPath, "-q", "-p", "no:cacheprovider", `--junitxml=${report}`];
       if (options.grep) cliArgs.push("-k", options.grep);
+      if (options.mark) cliArgs.push("-m", options.mark);
       const result = spawnSync(pythonBin(), cliArgs, {
         cwd: root,
         env: {
@@ -300,6 +301,15 @@ function practiceTests(result: RunResult, index: number) {
   return result.tests.filter((test) => test.title.includes(marker));
 }
 
+// The tag must select exactly the tests of practice N, nothing else.
+function tagFindings(tag: string, index: number, specPath: string): string[] {
+  const selected = usePython ? runPytest(specPath, { mark: tag.replace("@", "") }) : runSpec(specPath, { grep: tag });
+  const titles = selected.tests.map((test) => test.title);
+  if (titles.length === 0) return [`No test is tagged ${tag}: \`--grep ${tag}\` selects nothing.`];
+  const own = practiceTests(selected, index).length;
+  return own === titles.length && own > 0 ? [] : [`${tag} must select only practice ${index + 1}, but it selects:\n      ${titles.join("\n      ")}`];
+}
+
 function checkLesson(baseLesson: Lesson): boolean {
   const lesson = usePython ? pythonLesson(baseLesson) : baseLesson;
   const specPath = specPathFor(lesson);
@@ -327,6 +337,7 @@ function checkLesson(baseLesson: Lesson): boolean {
 
   const results: PracticeResult[] = lesson.practices.map((practice, index) => {
     const notes = rubricFindings(lesson, index, source);
+    if (lesson.check?.tag?.practice === index + 1) notes.push(...tagFindings(lesson.check.tag.name, index, specPath));
     const tests = practiceTests(normal, index);
     const name = `Practice ${index + 1} — ${practice.title}`;
     if (tests.length === 0) {

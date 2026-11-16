@@ -1,6 +1,6 @@
 // Lesson 18 — Hooks & organization
 // Structure cart tests with hooks, tag a smoke test, and attach a screenshot
-// after each test.
+// after each failing test.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 18-hooks
@@ -10,25 +10,29 @@ test.describe("practice 1: cart", () => {
   // TODO (guided): add a test.beforeEach that opens /shop.
 
   test("starts empty", async ({ page }) => {
-    // TODO: assert the header link text "Cart (0)".
+    // TODO: prove a new shopper's cart is empty (header link).
   });
 
   test("counts an added item", async ({ page }) => {
-    // TODO: add "Steel Kettlebell" and assert "Cart (1)".
+    // TODO: add "Steel Kettlebell" and prove the header counts one item.
   });
 });
 
 // TODO (independent): tag this test with { tag: "@smoke" } (second argument).
+// `npx playwright test --grep @smoke` must run this test and nothing else.
 test("practice 2: checkout is reachable", async ({ page }) => {
-  // Add an item (page.request.post("/api/shop/cart", ...) is quickest), open
-  // /shop/cart, and assert the "Checkout" link is visible.
+  // Put an item in the cart (page.request.post("/api/shop/cart", ...) is
+  // quickest), open /shop/cart, click through to checkout and prove you
+  // landed on the checkout page.
 });
 
 test.describe("practice 3: removing items", () => {
   // TODO (challenge): add a test.afterEach(async ({ page }, testInfo) => ...)
-  // that attaches page.screenshot() with testInfo.attach().
+  // that attaches page.screenshot() with testInfo.attach(), but only when the
+  // test failed: testInfo.status !== testInfo.expectedStatus.
 
-  test("empties the cart", async ({ page }) => {
-    // Add an item, open the cart, remove it, and assert "Your cart is empty."
+  test("removes one item at a time", async ({ page }) => {
+    // Add Steel Kettlebell and Yoga Mat, remove the kettlebell and prove only
+    // the mat is left, then remove the mat and prove the cart is empty.
   });
 });

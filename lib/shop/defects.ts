@@ -20,7 +20,7 @@ export const defects = {
   detailPriceWrong: ["29-capstone:2"],
   // API
   apiDropsKettlebell: ["16-api-testing:1"],
-  cartPostIgnoresQuantity: ["16-api-testing:2"],
+  cartPostIgnoresQuantity: ["16-api-testing:2", "21-fixtures:3.2"],
   loginAcceptsWrongPassword: ["16-api-testing:3", "29-capstone:7"],
   // Session
   loginStoresNoSession: ["17-auth-storage:1"],
@@ -31,14 +31,17 @@ export const defects = {
   // Cart
   cartStartsWithLeftover: ["18-hooks:1"],
   checkoutLinkMissing: ["18-hooks:2"],
-  removeIgnored: ["18-hooks:3"],
-  gym20GivesTen: ["19-data-driven:2"],
+  removeIgnored: ["18-hooks:3.1"],
+  removeClearsCart: ["18-hooks:3.2"],
+  gym20GivesTen: ["19-data-driven:2.1"],
+  lowercaseCodeRejected: ["19-data-driven:2.2"],
   cartBadgeStale: ["20-page-objects:1"],
-  totalNotRecalculated: ["20-page-objects:2", "29-capstone:3"],
-  discountIgnored: ["20-page-objects:3", "29-capstone:4"],
-  cartShowsQuantityOne: ["21-fixtures:3"],
+  totalNotRecalculated: ["20-page-objects:2", "20-page-objects:3.2", "29-capstone:3"],
+  discountIgnored: ["20-page-objects:3.1", "29-capstone:4"],
+  cartShowsQuantityOne: ["21-fixtures:3.1"],
   // Checkout & account
-  usShippingWrong: ["19-data-driven:3"],
+  usShippingWrong: ["19-data-driven:3.1"],
+  germanyExpressWrong: ["19-data-driven:3.2"],
   checkoutAcceptsInvalidEmail: ["29-capstone:5"],
   orderNumberMissing: ["29-capstone:6"],
   settingsToastMissing: ["29-capstone:8"]

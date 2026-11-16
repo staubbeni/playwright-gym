@@ -5,6 +5,8 @@ class CartPage:
     def __init__(self, page: Page):
         self.page = page
         self.total = page.get_by_test_id("cart-total")
+        self.subtotal = page.get_by_test_id("cart-subtotal")
+        self.discount = page.get_by_test_id("cart-discount")
         self.discount_code = page.get_by_label("Discount code")
 
     def goto(self):

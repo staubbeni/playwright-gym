@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     ignoreDiscount: defectActive("discountIgnored", request),
     gym20GivesTen: defectActive("gym20GivesTen", request)
   });
-  const shipping = shippingFor(body.country ?? "", body.delivery === "express", defectActive("usShippingWrong", request));
+  const shipping = shippingFor(body.country ?? "", body.delivery === "express", defectActive("usShippingWrong", request), defectActive("germanyExpressWrong", request));
   const order = createOrder(session, round(summary.total + shipping), summary.count);
   return Response.json(order, { status: 201 });
 }

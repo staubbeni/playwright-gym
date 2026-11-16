@@ -20,9 +20,12 @@ def test_practice_1_search_shows_matching_products(page: Page, term: str, count:
 
 
 # TODO (independent): parametrize test_practice_2_... over discount codes:
-# GYM10 → $134.10, GYM20 → $119.20, BOGUS → alert "Invalid discount code." and $149.00.
+# GYM10 → $134.10, GYM20 → $119.20, a lowercase gym10 → $134.10, and
+# BOGUS → an alert and the total stays $149.00.
 # Seed the cart with Adjustable Dumbbell via page.request.post("/api/shop/cart", ...).
 
-# TODO (challenge): parametrize test_practice_3_... over shipping countries:
-# Hungary $5.00, Germany $8.00, United States $15.00 on /shop/checkout
-# (shipping amount has the test id "checkout-shipping").
+# TODO (challenge): parametrize test_practice_3_... over every country ×
+# delivery on /shop/checkout (the shipping amount has the test id
+# "checkout-shipping"): Hungary $5.00, Germany $8.00, United States $15.00 with
+# Standard delivery, and Express (+$10.00) on top. Give each row a unique,
+# descriptive id (ids=[...] or pytest.param(..., id="...")).
