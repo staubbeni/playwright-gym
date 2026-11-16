@@ -22,7 +22,7 @@ export default function SetupPlayground() {
       </Panel>
       <Panel title="Before you begin">
         <ul aria-label="Setup checklist" className="check-list">
-          {(bug(3) ? checklist.slice(0, 3) : checklist).map((item) => <li key={item}>{item}</li>)}
+          {(bug("3.1") ? checklist.slice(0, 3) : checklist).map((item) => <li key={item}>{bug("3.2") && item === "Open the HTML report" ? "Open the report" : item}</li>)}
         </ul>
       </Panel>
     </PlaygroundCard>

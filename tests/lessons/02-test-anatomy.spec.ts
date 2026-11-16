@@ -1,5 +1,6 @@
 // Lesson 02 — Your first Playwright test
-// Verify the three stages of a test, their explanations, and the demo run.
+// Verify the three stages of a test, read a failing one, and structure a test
+// with steps.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 02-test-anatomy
@@ -11,15 +12,16 @@ test("practice 1: find the three stages", async ({ page }) => {
   // ids are all visible.
 });
 
-test("practice 2: verify the explanations", async ({ page }) => {
+// Practice 2 FAILS on purpose. Run it, read "Expected" and "Received" in the
+// error, and fix the test (not the page).
+test("practice 2: read the failure", async ({ page }) => {
   await page.goto("/play/02-test-anatomy");
-  // TODO (independent): Assert the user-facing explanation text of each stage
-  // with toContainText.
-  // Hint: Act should mention "one focused user action".
+  await expect(page.getByTestId("arrange-step")).toContainText("prepare the test fixture");
+  await expect(page.getByTestId("act-step")).toHaveText("Perform one focused user action.");
 });
 
 test("practice 3: structure a readable test", async ({ page }) => {
-  await page.goto("/play/02-test-anatomy");
-  // TODO (challenge): Use three test.step() blocks (Arrange, Act, Assert):
-  // open the page, click Run demo test, and assert "Demo test passed.".
+  // TODO (challenge): three test.step() blocks (Arrange, Act, Assert). Open
+  // /play/02-test-anatomy, click "Run demo test", then assert the verdict
+  // "Demo test passed." and the counter "Stages completed: 3 of 3".
 });

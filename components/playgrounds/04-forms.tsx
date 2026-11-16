@@ -16,18 +16,25 @@ export default function FormsPlayground() {
     event.preventDefault();
     const next: Errors = {};
     if (!values.name.trim()) next.name = "Full name is required.";
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email) && !bug(2)) next.email = "Enter a valid email address.";
-    if (values.password.length < 8) next.password = "Password must be at least 8 characters.";
-    if (!values.terms) next.terms = "You must accept the terms.";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email) && !bug("2.1")) next.email = "Enter a valid email address.";
+    if (values.password.length < 8 && !bug("2.2")) next.password = "Password must be at least 8 characters.";
+    if (!values.terms && !bug("2.3")) next.terms = "You must accept the terms.";
     setErrors(next);
     if (Object.keys(next).length > 0) {
       setStatus("Fix the errors above.");
       return;
     }
     if (bug(1)) return;
-    const plan = bug(3) ? "Free" : values.plan;
-    const role = bug(3) ? "Student" : values.role;
+    const plan = bug("3.1") ? "Free" : values.plan;
+    const role = bug("3.2") ? "Student" : values.role;
     setStatus(`Account created for ${values.name.trim()} on the ${plan} plan as a ${role}.`);
+  };
+
+  const reset = () => {
+    // 3.3: reset forgets to clear the name
+    setValues({ name: bug("3.3") ? values.name : "", email: "", password: "", plan: "Free", role: "Student", terms: false });
+    setErrors({});
+    setStatus("Complete the form to continue.");
   };
 
   const field = (key: "name" | "email" | "password", label: string, type = "text") => (
@@ -70,7 +77,10 @@ export default function FormsPlayground() {
           I accept the terms
         </label>
         {errors.terms && <p className="error-text" role="alert">{errors.terms}</p>}
-        <button className="primary-button" type="submit">Create account</button>
+        <div className="button-row">
+          <button className="primary-button" type="submit">Create account</button>
+          <button className="secondary-button" type="button" onClick={reset}>Reset form</button>
+        </div>
       </form>
       <p className="result-panel" role="status">{status}</p>
     </PlaygroundCard>

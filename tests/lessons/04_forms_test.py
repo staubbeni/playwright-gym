@@ -1,9 +1,8 @@
 # Lesson 04 — Forms & validation
-# Create an account, prove that an invalid email is rejected, and verify the
-# selected plan and role.
+# Create an account, prove each validation rule, and check the summary and the
+# reset button.
 #
 # Copy this file to tests/solutions/ before editing, then run:
-#   pytest tests/solutions/04_forms_test.py
 #   npm run check -- 04-forms --python
 from playwright.sync_api import Page, expect
 
@@ -15,17 +14,18 @@ def test_practice_1_happy_path(page: Page):
     # "Account created".
 
 
-def test_practice_2_invalid_email(page: Page):
+def test_practice_2_validation_matrix(page: Page):
     page.goto("/play/04-forms")
-    # TODO (independent): Submit with email "not-an-email" (everything else
-    # valid) and assert the alert "Enter a valid email address.".
-    # Hint: Each field error has role=alert, but Next.js also renders an empty
-    # route announcer with role=alert. Narrow it down:
-    # get_by_role("alert").filter(has_text="email").
+    # TODO (independent): prove each rule on its own: an invalid email, a
+    # 7-character password and unchecked terms are each rejected with a message,
+    # and no account is created.
+    # Hint: Next.js adds an empty role=alert, so narrow it with
+    # get_by_role("alert").filter(has_text=...).
 
 
-def test_practice_3_options_and_summary(page: Page):
+def test_practice_3_options_summary_and_reset(page: Page):
     page.goto("/play/04-forms")
-    # TODO (challenge): Choose plan "Pro" and role "Teacher" and assert the
-    # exact summary: "Account created for Ada Lovelace on the Pro plan as a
-    # Teacher.".
+    # TODO (challenge): choose plan "Pro" and role "Teacher" and assert the exact
+    # summary. Then click "Reset form" and assert the form is clean: empty name,
+    # Free plan, Student role and the starting status "Complete the form to
+    # continue.".

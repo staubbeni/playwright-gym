@@ -5,7 +5,8 @@ export const defects = {
   // Navigation & catalog
   cartLinkWrong: ["05-navigation:1"],
   productLinkWrong: ["05-navigation:2"],
-  accountNoRedirect: ["05-navigation:3"],
+  accountNoRedirect: ["05-navigation:3.1"],
+  loginIgnoresNext: ["05-navigation:3.2"],
   addsWrongProduct: ["06-locator-strategy:1"],
   searchIgnored: ["06-locator-strategy:2", "21-fixtures:1", "29-capstone:1"],
   saleBadgeMissing: ["06-locator-strategy:3"],

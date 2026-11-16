@@ -2,9 +2,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useDefect } from "./use-defect";
 
 export function Login() {
   const router = useRouter();
+  const ignoresNext = useDefect("loginIgnoresNext");
   const next = useSearchParams().get("next") ?? "/shop/account";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +23,7 @@ export function Login() {
       setError(((await response.json()) as { error: string }).error);
       return;
     }
-    router.push(next.startsWith("/") && !next.startsWith("//") ? next : "/shop/account");
+    router.push(!ignoresNext && next.startsWith("/") && !next.startsWith("//") ? next : "/shop");
     router.refresh();
   };
 

@@ -1,10 +1,10 @@
 # Lesson 05 — Navigation & URLs
-# Navigate to the cart and a product page, then verify the login redirect
-# for the account page.
+# Navigate to the cart, move through history, and test the login redirect.
 #
 # Copy this file to tests/solutions/ before editing, then run:
-#   pytest tests/solutions/05_navigation_test.py
 #   npm run check -- 05-navigation --python
+import re
+
 from playwright.sync_api import Page, expect
 
 
@@ -15,15 +15,17 @@ def test_practice_1_go_to_the_cart(page: Page):
     # visible.
 
 
-def test_practice_2_open_a_product(page: Page):
+def test_practice_2_back_forward_and_reload(page: Page):
     page.goto("/shop")
-    # TODO (independent): Click the product link "Trail Runner Shoes" and assert
-    # the URL /shop/products/trail-runner-shoes and the product heading.
+    # TODO (independent): open "Trail Runner Shoes" and assert its URL and
+    # heading. Go back (assert the catalog), go forward, reload and assert the
+    # product page is still there.
+    # Hint: go_back / go_forward / reload don't wait for the UI: assert after each.
 
 
-def test_practice_3_protected_redirect(page: Page):
-    page.goto("/shop")
-    # TODO (challenge): Open /shop/account while logged out and assert that you
-    # are redirected to /shop/login and see the "Sign in" heading.
-    # Hint: the URL gets a query string (?next=/shop/account), so match it with
-    # re.compile(r"/shop/login") rather than an exact string.
+def test_practice_3_protected_page_and_next(page: Page):
+    # TODO (challenge): open /shop/account while logged out. Assert you are sent
+    # to /shop/login and the URL has ?next=/shop/account. Sign in as student /
+    # playwright and assert you land back on "My account".
+    # Hint: to_have_url(re.compile(r"/shop/login\?next="))
+    ...

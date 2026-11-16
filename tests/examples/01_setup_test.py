@@ -18,6 +18,8 @@ def test_practice_2_starting_the_training_shows_a_message(page: Page):
     expect(page.get_by_text("Training started. Good luck!")).to_be_visible()
 
 
-def test_practice_3_the_setup_checklist_has_four_items(page: Page):
+def test_practice_3_the_setup_checklist_lists_four_steps_in_order(page: Page):
     checklist = page.get_by_role("list", name="Setup checklist")
-    expect(checklist.get_by_role("listitem")).to_have_count(4)
+    expect(checklist.get_by_role("listitem")).to_have_text(
+        ["Install Node.js", "Install Playwright", "Run the example test", "Open the HTML report"]
+    )

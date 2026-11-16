@@ -12,7 +12,7 @@ export default function TestAnatomyPlayground() {
   const run = () => {
     setResult("Running demo test...");
     [1, 2, 3].forEach((next) => window.setTimeout(() => setStage(next), next * 200));
-    window.setTimeout(() => setResult(bug(3) ? "Demo test failed." : "Demo test passed."), 700);
+    window.setTimeout(() => setResult(bug("3.1") ? "Demo test failed." : "Demo test passed."), 700);
   };
 
   const step = (index: number, id: string, title: string, text: string) => (
@@ -29,6 +29,7 @@ export default function TestAnatomyPlayground() {
       {!bug(1) && step(3, "assert-step", "Assert", "Verify the outcome with a web-first assertion.")}
       <button className="primary-button" type="button" onClick={run}>Run demo test</button>
       <p className="result-panel" role="status" data-testid="demo-result">{result}</p>
+      <p className="muted" data-testid="stage-count">Stages completed: {bug("3.2") ? Math.min(stage, 2) : stage} of 3</p>
     </PlaygroundCard>
   );
 }

@@ -13,7 +13,12 @@ test("practice 2: starting the training shows a message", async ({ page }) => {
   await expect(page.getByText("Training started. Good luck!")).toBeVisible();
 });
 
-test("practice 3: the setup checklist has four items", async ({ page }) => {
+test("practice 3: the setup checklist lists four steps in order", async ({ page }) => {
   const checklist = page.getByRole("list", { name: "Setup checklist" });
-  await expect(checklist.getByRole("listitem")).toHaveCount(4);
+  await expect(checklist.getByRole("listitem")).toHaveText([
+    "Install Node.js",
+    "Install Playwright",
+    "Run the example test",
+    "Open the HTML report"
+  ]);
 });

@@ -35,17 +35,22 @@ Every test receives fixtures such as \`page\`, which is a fresh browser tab in a
         rubric: { requires: [{ pattern: /toHaveTitle\(/, message: "Use toHaveTitle() for the title." }] }
       },
       {
-        title: "Record a click with codegen",
-        goal: "Run `npx playwright codegen http://127.0.0.1:3000/play/01-setup`, click Start training, and keep an assertion that the message \"Training started. Good luck!\" is visible.",
+        title: "Clean up a recorded test",
+        goal: "The starter holds a test that codegen could have recorded: it passes, but it finds elements with CSS selectors. Rewrite it the way a user sees the page (role and text locators) and keep the assertion that the start message shows.",
         difficulty: "independent",
-        hint: "In the codegen toolbar, the eye and \"Aa\" icons record visibility and text assertions."
+        hint: "Run `npx playwright codegen http://127.0.0.1:3000/play/01-setup` and compare: prefer getByRole(\"button\", { name: ... }) and getByText(...) over button.primary-button.",
+        rubric: {
+          requires: [{ pattern: /getByRole\(/, message: "Find the button by its role and name." }],
+          forbids: [{ pattern: /\.locator\(/, message: "Replace the CSS locators with getByRole / getByText." }]
+        }
       },
       {
-        title: "Count the setup checklist",
-        goal: "Assert that the list named \"Setup checklist\" has exactly 4 items.",
+        title: "Assert the setup checklist",
+        goal: "The checklist must have exactly four steps and each one must read: Install Node.js, Install Playwright, Run the example test, Open the HTML report. Prove both, in the order shown.",
         difficulty: "challenge",
-        hint: "Chain locators: getByRole(\"list\", { name: ... }).getByRole(\"listitem\"), then use toHaveCount.",
-        rubric: { requires: [{ pattern: /toHaveCount\(/, message: "Use toHaveCount() to count items." }] }
+        hint: "`toHaveText([...])` takes an array and checks the count and the text of every item in order.",
+        bugs: ["The last step is missing", "A step is renamed"],
+        rubric: { requires: [{ pattern: /toHaveText\(\s*\[|toHaveCount\(/, message: "Check every item's text (toHaveText with an array) or at least count the items." }] }
       }
     ],
     concepts: ["Test runner", "Fixtures", "HTML report", "Codegen", "UI mode"],
@@ -102,15 +107,19 @@ The \`page\` fixture is created fresh for every test inside a new browser contex
         }
       },
       {
-        title: "Verify the explanations",
-        goal: "Assert the user-facing explanation text of each stage with toContainText.",
+        title: "Read the failure",
+        goal: "The starter's test fails. Run it, read the error (expected vs received) and fix the test, not the page. Don't make it pass by deleting the check or skipping the test.",
         difficulty: "independent",
-        hint: "Act should mention \"one focused user action\"."
+        hint: "The act-step element contains the heading \"Act\" as well as the sentence, and toHaveText matches the whole text. Which matcher checks only a part?",
+        rubric: {
+          forbids: [{ pattern: /test\.(skip|fixme)|\.catch\(|\.not\./, message: "Fix the assertion itself; don't skip it or swallow the error." }]
+        }
       },
       {
         title: "Structure a readable test",
-        goal: "Use three test.step() blocks (Arrange, Act, Assert): open the page, click Run demo test, and assert \"Demo test passed.\".",
+        goal: "Write one test with three test.step() blocks (Arrange, Act, Assert): open the page, click Run demo test, then assert both the verdict \"Demo test passed.\" and the counter \"Stages completed: 3 of 3\".",
         difficulty: "challenge",
+        bugs: ["The verdict says the test failed", "The stage counter stops at 2 of 3"],
         rubric: {
           requires: [
             {
@@ -162,18 +171,23 @@ Locators are **strict**: if a locator matches more than one element when you act
         rubric: { forbids: [{ pattern: /#action-/, message: "Do not use the changing id." }] }
       },
       {
-        title: "Icon-only button",
-        goal: "Click the gear button (accessible name \"Open settings\") and assert that the region named \"Settings panel\" is visible.",
-        partial: "```\nawait page.getByRole(\"button\", { name: \"Open settings\" }).click();\n// now assert the region is visible\n```",
+        title: "Two controls, no CSS",
+        goal: "Open the settings panel with the gear button and prove it is visible. Then type \"locators\" into the search box and prove the echo shows it. Use built-in locators only: no CSS, no ids.",
         difficulty: "independent",
-        hint: "getByRole(\"region\", { name: \"Settings panel\" })"
+        hint: "The gear has no text, but its aria-label is its accessible name. The search box has no label: find it by its placeholder.",
+        bugs: ["The settings panel never opens", "The search echo stays empty"],
+        rubric: {
+          requires: [{ pattern: /getByPlaceholder\(/, message: "Use getByPlaceholder() for the search field." }],
+          forbids: [{ pattern: /\.locator\(/, message: "Use built-in locators instead of locator()." }]
+        }
       },
       {
-        title: "Placeholder search",
-        goal: "Fill the field with placeholder \"Search lessons\" with \"locators\" and assert the echo \"Showing results for: locators\".",
-        partial: "```\nawait page.getByPlaceholder(\"Search lessons\").fill(\"locators\");\n// now assert the echo text\n```",
+        title: "Fix the strict mode error",
+        goal: "The starter clicks Save and fails with a strict mode violation. Run it, read which elements matched, and fix the locator (no .first(), .last() or .nth()). Then click \"Save as draft\" and assert its result too.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /getByPlaceholder\(/, message: "Use getByPlaceholder() for the search field." }] }
+        hint: "Role names match as a case-insensitive substring by default. { exact: true } or a regular expression pins the name down.",
+        bugs: ["Save reports a draft instead of a saved document", "Save as draft does nothing"],
+        rubric: { forbids: [{ pattern: /\.(first|last|nth)\(/, message: "Make the locator unambiguous; don't pick by position." }] }
       }
     ],
     concepts: ["Role locators", "Accessible names", "Strictness", "Lazy locators"],
@@ -218,18 +232,25 @@ await page.getByRole("radio", { name: "Teacher" }).check();`,
         difficulty: "guided"
       },
       {
-        title: "Invalid email",
-        goal: "Submit with email \"not-an-email\" (everything else valid) and assert the alert \"Enter a valid email address.\".",
-        partial: "```\n// fill every field with valid data, but use \"not-an-email\" for the email\nawait page.getByRole(\"button\", { name: \"Create account\" }).click();\n```",
+        title: "Validation matrix",
+        goal: "A form that accepts bad input is a bug. Prove each rule on its own: an invalid email, a 7-character password and unchecked terms are each rejected with a message, and no account is created.",
         difficulty: "independent",
-        hint: "Each field error has role=alert, but Next.js also renders an empty route announcer with role=alert. Narrow it down: getByRole(\"alert\").filter({ hasText: \"email\" })."
+        hint: "Start every case from valid data and break one field. Each field error has role=alert, but Next.js also renders an empty route announcer with role=alert. Narrow it down: getByRole(\"alert\").filter({ hasText: \"email\" }).",
+        bugs: ["A malformed email is accepted", "A 7-character password is accepted", "The terms checkbox is not required"],
+        rubric: { requires: [{ pattern: /getByRole\(["']alert/, message: "Assert the error message (role alert) for each rule." }] }
       },
       {
-        title: "Options and summary",
-        goal: "Choose plan \"Pro\" and role \"Teacher\" and assert the exact summary: \"Account created for Ada Lovelace on the Pro plan as a Teacher.\".",
-        partial: "```\nawait page.getByLabel(\"Plan\").selectOption(\"Pro\");\nawait page.getByRole(\"radio\", { name: \"Teacher\" }).check();\n// fill the rest, submit, then assert the summary\n```",
+        title: "Options, summary and reset",
+        goal: "Choose plan \"Pro\" and role \"Teacher\" and assert the exact summary. Then click \"Reset form\" and prove the form is clean again: empty name, Free plan, Student role and the starting status message.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /selectOption\(/, message: "Use selectOption() for the plan." }] }
+        hint: "toHaveValue() reads a field, toBeChecked() a radio. The starting status is \"Complete the form to continue.\".",
+        bugs: ["The summary ignores the chosen plan", "The summary ignores the chosen role", "Reset keeps the name"],
+        rubric: {
+          requires: [
+            { pattern: /selectOption\(/, message: "Use selectOption() for the plan." },
+            { pattern: /toHaveValue\(/, message: "Check the reset fields with toHaveValue()." }
+          ]
+        }
       }
     ],
     concepts: ["Labels", "fill / check / selectOption", "Validation paths"],
@@ -274,17 +295,24 @@ await expect(page).toHaveURL(/\\/shop\\/cart$/);`,
         rubric: { requires: [{ pattern: /toHaveURL\(/, message: "Use toHaveURL() for the URL." }] }
       },
       {
-        title: "Open a product",
-        goal: "Click the product link \"Trail Runner Shoes\" and assert the URL /shop/products/trail-runner-shoes and the product heading.",
-        partial: "```\nawait page.goto(\"/shop\");\nawait page.getByRole(\"link\", { name: \"Trail Runner Shoes\" }).click();\n// now assert URL and heading\n```",
-        difficulty: "independent"
+        title: "Back, forward and reload",
+        goal: "Open \"Trail Runner Shoes\" from the catalog and prove you are on its page (URL and heading). Go back and prove you are on the catalog again, go forward, then reload and prove the product page survives a reload.",
+        difficulty: "independent",
+        hint: "page.goBack(), page.goForward() and page.reload() resolve before the page is ready, so assert the URL after each one.",
+        rubric: {
+          requires: [
+            { pattern: /goBack\(/, message: "Use page.goBack()." },
+            { pattern: /reload\(/, message: "Use page.reload()." }
+          ]
+        }
       },
       {
-        title: "Protected redirect",
-        goal: "Open /shop/account while logged out and assert that you are redirected to /shop/login and see the \"Sign in\" heading.",
-        hint: "The redirect adds a query string (/shop/login?next=/shop/account), so match the URL with a regex such as /\\/shop\\/login/ instead of an exact string.",
-        partial: "```\nawait page.goto(\"/shop/account\");\n// now assert the URL and the \"Sign in\" heading\n```",
-        difficulty: "challenge"
+        title: "Protected page and ?next=",
+        goal: "Open /shop/account while logged out and prove you are sent to the login page and that the URL remembers where you came from (?next=/shop/account). Sign in as student / playwright and prove you land back on \"My account\".",
+        difficulty: "challenge",
+        hint: "The redirect adds a query string, so match the URL with a regular expression such as /\\/shop\\/login\\?next=/. Pages are also reachable straight from the login form's submit.",
+        bugs: ["Anonymous users are not redirected", "Signing in ignores the page you came from"],
+        rubric: { requires: [{ pattern: /next=|next%3D/, message: "Assert the next= query parameter in the login URL." }] }
       }
     ],
     concepts: ["baseURL", "toHaveURL", "Redirects"],
