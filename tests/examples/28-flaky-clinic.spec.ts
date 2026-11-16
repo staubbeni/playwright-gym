@@ -21,3 +21,21 @@ test("practice 3: confirms the sync", async ({ page }) => {
   await page.getByRole("button", { name: "Sync now" }).click();
   await expect(page.getByRole("region", { name: "Notifications" }).getByRole("status")).toHaveText("Synced.");
 });
+
+test("practice 4: the total settles and the page says so", async ({ page }) => {
+  await page.getByRole("button", { name: "Count up" }).click();
+  await expect(page.getByTestId("total")).toHaveText("Total: 120");
+  await expect(page.getByTestId("count-status")).toHaveText("Counting finished.");
+});
+
+test("practice 5: only the final search results stay", async ({ page }) => {
+  const field = page.getByLabel("Find exercise");
+  const results = page.getByRole("list", { name: "Results" }).getByRole("listitem");
+  await field.pressSequentially("squat");
+  await expect(results).toHaveText(["Squat"]);
+
+  await field.clear();
+  await field.pressSequentially("zzz");
+  await expect(page.getByText("No exercises found.")).toBeVisible();
+  await expect(results).toHaveCount(0);
+});

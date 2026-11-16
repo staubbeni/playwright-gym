@@ -57,7 +57,7 @@ export default function ConfigCiPlayground() {
           <button className="primary-button" type="button" onClick={addMember}>Add member</button>
         </div>
         <ul aria-label="Members">
-          {members.map((member, index) => <li key={`${member}-${index}`}>{member}</li>)}
+          {members.map((member, index) => <li key={`${member}-${index}`}>{bug("3.2") ? member.slice(0, 16) : member}</li>)}
         </ul>
       </Panel>
     </PlaygroundCard>

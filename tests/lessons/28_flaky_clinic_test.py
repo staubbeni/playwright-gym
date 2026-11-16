@@ -1,5 +1,5 @@
 # Lesson 28 — Flaky test clinic
-# These three tests are FLAKY on purpose. Run them a few times:
+# These five tests are FLAKY on purpose. Run them a few times:
 #   pytest tests/solutions/28_flaky_clinic_test.py
 # Find the cause of each flake and fix it properly (no retries, no longer sleeps).
 # The checker runs your fixed spec 5 times in a row.
@@ -29,3 +29,17 @@ def test_practice_3_confirms_the_sync(page: Page):
     page.get_by_role("button", name="Sync now").click()
     page.wait_for_timeout(1000)
     expect(page.get_by_role("status")).to_have_text("Synced.")
+
+
+def test_practice_4_the_counting_total(page: Page):
+    page.get_by_role("button", name="Count up").click()
+    page.wait_for_timeout(500)
+    assert page.get_by_test_id("total").text_content() == "Total: 120"
+    assert page.get_by_test_id("count-status").text_content() == "Counting finished."
+
+
+def test_practice_5_the_out_of_order_search(page: Page):
+    page.get_by_label("Find exercise").press_sequentially("squat")
+    page.wait_for_timeout(300)
+    assert page.get_by_role("list", name="Results").get_by_role("listitem").count() == 1
+    # TODO: also search for something that doesn't exist and assert the page says so.

@@ -34,3 +34,14 @@ def test_practice_3_adds_a_unique_member(page: Page, role: str):
     page.get_by_role("button", name="Add member").click()
     members = page.get_by_role("list", name="Members")
     expect(members.get_by_text(name, exact=True)).to_have_count(1)
+
+
+def test_practice_3_a_member_is_still_listed_after_a_reload(page: Page):
+    name = f"reload-{uuid.uuid4().hex}"
+    page.goto("/play/27-config-ci")
+    page.get_by_label("Member name").fill(name)
+    page.get_by_role("button", name="Add member").click()
+    members = page.get_by_role("list", name="Members")
+    expect(members.get_by_text(name, exact=True)).to_have_count(1)
+    page.reload()
+    expect(members.get_by_text(name, exact=True)).to_have_count(1)
