@@ -41,7 +41,15 @@ checker:
 2. runs the practice against the normal app, where it must pass;
 3. runs it again with the bug flag `<lesson>:<N>` switched on, where it must fail.
    A test that stays green is a **false positive**: it doesn't really verify
-   the behavior.
+   the behavior. Harder practices plant several defects (`<lesson>:<N>.1`,
+   `.2`, …) and the checker switches each on alone, so a weak test gets
+   told which one it missed: `Caught 1/3 planted bugs. Your test stays green
+   when: "…"`.
+
+Practices ramp up: practice 1 is a quick win, practice 2 states an outcome
+and leaves the locators and assertions to you, and practice 3 either plants
+several bugs or ships a deliberately broken test for you to repair. Expect
+roughly 3, 5 and 8-10 minutes.
 
 Lessons 20, 21 and 29 also use page objects: copy `tests/lessons/pages/` to
 `tests/solutions/pages/` once.
@@ -101,7 +109,9 @@ mistakes, the practice set with hints, and links to the official docs.
 
 ## Bug mode
 
-Planted bugs are switched on by flags such as `03-selectors:2`:
+Planted bugs are switched on by flags such as `03-selectors:2` (a practice with
+several defects also has `03-selectors:2.1`, `2.2`, …; the plain flag turns
+them all on):
 
 - In the browser, append `?bug=true` (all flags of the current lesson),
   `?bug=03-selectors:2` (one flag), or `?bug=false` (off). The choice is
@@ -147,7 +157,9 @@ npm run check:all -- --examples --python            # the Python track
    (array order is the curriculum order; the id prefix is its number).
 2. Add a playground in `components/playgrounds/` and register it, or point
    `target` at a Gym Shop page and add defects to `lib/shop/defects.ts`.
-3. Gate each practice's bug with `useLessonBugs(id)` → `bug(N)`.
+3. Gate each practice's bug with `useLessonBugs(id)` → `bug(N)`; for a
+   practice with several defects list labels in `Practice.bugs` and gate each
+   with `bug("N.k")` (shop defects list the `<id>:N.k` flags).
 4. Add a starter in `tests/lessons/` and a reference in `tests/examples/`.
 5. Add the Python entry in `lib/lessons/python/0X-*.ts` (the app refuses to
    load without one), plus `<id>_test.py` starter and reference.
