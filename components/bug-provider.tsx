@@ -16,7 +16,7 @@ export function useBug(flags: readonly string[]): boolean {
 // Returns a checker for one lesson: bug(2) is true when "<lessonId>:2" is active.
 export function useLessonBugs(lessonId: string) {
   const active = useContext(BugContext);
-  const bug = (practice: number) => flagActive(active, `${lessonId}:${practice}`);
+  const bug = (practice: number | string) => flagActive(active, `${lessonId}:${practice}`);
   bug.any = active.some((flag) => flag === "*" || flag.startsWith(`${lessonId}:`));
   return bug;
 }

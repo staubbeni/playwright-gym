@@ -17,6 +17,9 @@ export type Practice = {
   // Start of a solution (Stuck? step 2): the actions, not the assertions.
   partial?: string;
   rubric?: Rubric;
+  // Planted defects, one label per sub-flag "<lessonId>:<N>.<k>" (k = 1..n).
+  // The checker switches each on alone and your practice must catch every one.
+  bugs?: string[];
 };
 
 // Python (pytest-playwright, sync API) version of a lesson. Prose that is not

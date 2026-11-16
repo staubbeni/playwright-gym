@@ -1,4 +1,5 @@
-// Bug flags look like "<lessonId>:<practice>" (e.g. "03-selectors:2").
+// Bug flags look like "<lessonId>:<practice>" (e.g. "03-selectors:2") or, for a
+// practice with several planted defects, "<lessonId>:<practice>.<k>".
 // "<lessonId>:*" enables every flag of a lesson and "*" enables everything.
 export const BUG_HEADER = "x-gym-bug";
 export const FLAGS_HEADER = "x-gym-bug-flags";
@@ -18,6 +19,7 @@ export function flagActive(active: readonly string[], flag: string): boolean {
     (entry) =>
       entry === "*" ||
       entry === flag ||
+      flag.startsWith(`${entry}.`) || // "03:2" also switches on its sub-bugs "03:2.1", "03:2.2"
       (entry.endsWith(":*") && flag.startsWith(entry.slice(0, -1)))
   );
 }

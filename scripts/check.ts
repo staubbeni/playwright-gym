@@ -338,11 +338,21 @@ function checkLesson(baseLesson: Lesson): boolean {
       const reason = errorSummary(run(specPath, { grep: practiceGrep(index) }).output);
       return { name, ok: false, notes: [`Fails against the normal app${runs}.${reason ? `\n      ${reason}` : ""}`, ...notes] };
     }
-    const flag = `${lesson.id}:${index + 1}`;
-    const mutated = run(specPath, { bug: flag, grep: practiceGrep(index) });
     // A crash or compile error also exits non-zero, so require a real failing test.
-    if (!practiceTests(mutated, index).some((test) => !test.passed)) {
-      return { name, ok: false, notes: [`False positive: still green with bug ${flag} switched on. Assert the outcome more precisely.`, ...notes] };
+    const caught = (flag: string) =>
+      practiceTests(run(specPath, { bug: flag, grep: practiceGrep(index) }), index).some((test) => !test.passed);
+    const flag = `${lesson.id}:${index + 1}`;
+    if (!practice.bugs) {
+      if (!caught(flag)) {
+        return { name, ok: false, notes: [`False positive: still green with bug ${flag} switched on. Assert the outcome more precisely.`, ...notes] };
+      }
+      return { name, ok: notes.length === 0, notes };
+    }
+    const missed = practice.bugs.filter((_, k) => !caught(`${flag}.${k + 1}`));
+    if (missed.length > 0) {
+      const total = practice.bugs.length;
+      const miss = missed.map((label) => `"${label}"`).join(", ");
+      return { name, ok: false, notes: [`Caught ${total - missed.length}/${total} planted bugs. Your test stays green when: ${miss}.`, ...notes] };
     }
     return { name, ok: notes.length === 0, notes };
   });
