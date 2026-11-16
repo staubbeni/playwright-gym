@@ -1,6 +1,6 @@
 # Lesson 21 — Custom fixtures
 # Write three fixtures: a catalog page object, a logged-in account page, and a
-# cart seeded via API with teardown.
+# cart seeded via API with teardown, driven by a fixture parameter.
 #
 # Needs your page objects from lesson 20 in tests/solutions/pages/.
 #   pytest tests/solutions/21_fixtures_test.py
@@ -18,29 +18,34 @@ def catalog_page(page: Page):
 
 @pytest.fixture
 def account_page(page: Page):
-    # TODO (independent): log in via page.request, open /shop/account, then
-    # return page.
+    # TODO (independent): sign the student in via page.request (see lesson 17
+    # for the endpoint), open the account page, then return page.
     pass
 
 
 @pytest.fixture
-def seeded_cart(page: Page):
-    # TODO (challenge): POST 2 × "whey-protein" to /api/shop/cart, `yield`,
-    # then clean up with page.request.delete("/api/shop/cart").
+def seeded_cart(page: Page, request: pytest.FixtureRequest):
+    # TODO (challenge): read the seed with
+    #   getattr(request, "param", {"productId": "whey-protein", "quantity": 2})
+    # POST it to /api/shop/cart, `yield`, then clean up with
+    # page.request.delete("/api/shop/cart").
     yield
 
 
 def test_practice_1_the_catalog_fixture_is_ready_to_search(catalog_page: CatalogPage):
-    # TODO: search "bands" and assert exactly one article: "Resistance Bands".
+    # TODO: search for resistance bands and prove exactly one product is listed
+    # and that it is the right one.
     pass
 
 
 def test_practice_2_the_account_fixture_is_logged_in(account_page: Page):
-    # TODO: assert "Signed in as student".
+    # TODO: prove the page says who is signed in.
     pass
 
 
-@pytest.mark.usefixtures("seeded_cart")
-def test_practice_3_the_cart_fixture_seeds_and_cleans_up(page: Page):
-    # TODO: open /shop/cart and assert the Whey Protein quantity is "2".
+# TODO (challenge): choose 3 × "resistance-bands" for this test with
+# @pytest.mark.parametrize("seeded_cart", [{...}], indirect=True)
+def test_practice_3_the_seeded_cart_shows_the_seeded_quantity(page: Page, seeded_cart):
+    # TODO: open the cart and prove it holds three bands: the quantity field
+    # and the header count.
     pass

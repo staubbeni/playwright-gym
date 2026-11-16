@@ -22,11 +22,13 @@ for (const { term, count } of searches) {
 }
 
 // TODO (independent): build a `codes` table and generate one test per row:
-// GYM10 → $134.10, GYM20 → $119.20, BOGUS → alert "Invalid discount code." and $149.00.
+// GYM10 → $134.10, GYM20 → $119.20, a lowercase gym10 → $134.10, and
+// BOGUS → an alert and the total stays $149.00.
 // Seed the cart with Adjustable Dumbbell via page.request.post("/api/shop/cart", ...).
 // Titles must start with "practice 2:" and be unique.
 
-// TODO (challenge): build a `shipping` table and generate one test per row:
-// Hungary $5.00, Germany $8.00, United States $15.00 on /shop/checkout
-// (shipping amount has the test id "checkout-shipping").
-// Titles must start with "practice 3:".
+// TODO (challenge): generate one test per country × delivery on /shop/checkout
+// (the shipping amount has the test id "checkout-shipping"):
+// Hungary $5.00, Germany $8.00, United States $15.00 with Standard delivery,
+// and Express (+$10.00) on top. Titles must start with "practice 3:", be
+// unique, and name the country and the delivery.

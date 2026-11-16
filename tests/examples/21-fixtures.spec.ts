@@ -1,9 +1,12 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { CatalogPage } from "./pages/catalog-page";
 
+type Seed = { productId: string; quantity: number };
+
 type Fixtures = {
   catalogPage: CatalogPage;
   accountPage: Page;
+  seed: Seed;
   seededCart: void;
 };
 
@@ -20,8 +23,10 @@ const test = base.extend<Fixtures>({
     await use(page);
   },
 
-  seededCart: async ({ page }, use) => {
-    await page.request.post("/api/shop/cart", { data: { productId: "whey-protein", quantity: 2 } });
+  seed: [{ productId: "whey-protein", quantity: 2 }, { option: true }],
+
+  seededCart: async ({ page, seed }, use) => {
+    await page.request.post("/api/shop/cart", { data: seed });
     await use();
     await page.request.delete("/api/shop/cart");
   }
@@ -37,8 +42,13 @@ test("practice 2: the account fixture is logged in", async ({ accountPage }) => 
   await expect(accountPage.getByText("Signed in as student")).toBeVisible();
 });
 
-test("practice 3: the cart fixture seeds and cleans up", async ({ page, seededCart }) => {
-  void seededCart;
-  await page.goto("/shop/cart");
-  await expect(page.getByLabel("Quantity for Whey Protein")).toHaveValue("2");
+test.describe("practice 3: seeded cart", () => {
+  test.use({ seed: { productId: "resistance-bands", quantity: 3 } });
+
+  test("shows the seeded quantity", async ({ page, seededCart }) => {
+    void seededCart;
+    await page.goto("/shop/cart");
+    await expect(page.getByLabel("Quantity for Resistance Bands")).toHaveValue("3");
+    await expect(page.getByRole("link", { name: /^Cart/ })).toHaveText("Cart (3)");
+  });
 });

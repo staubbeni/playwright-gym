@@ -14,12 +14,13 @@ export function Checkout() {
   const [form, setForm] = useState({ name: "", email: "", address: "", country: "HU", delivery: "standard" });
   const [errors, setErrors] = useState<Errors>({});
   const usShippingWrong = useDefect("usShippingWrong");
+  const germanyExpressWrong = useDefect("germanyExpressWrong");
 
   useEffect(() => {
     fetch("/api/shop/cart").then((response) => response.json()).then(setCart);
   }, []);
 
-  const shipping = shippingFor(form.country, form.delivery === "express", usShippingWrong);
+  const shipping = shippingFor(form.country, form.delivery === "express", usShippingWrong, germanyExpressWrong);
   const total = (cart?.total ?? 0) + shipping;
   const set = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [field]: event.target.value });

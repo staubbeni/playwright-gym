@@ -7,7 +7,7 @@ export const testDesign: Record<string, PythonLesson> = {
 
 Marks let you select tests: \`@pytest.mark.smoke\` on a test, then \`pytest -m smoke\`. Register custom marks in \`pytest.ini\` (this repo registers \`smoke\`). \`@pytest.mark.skip\`, \`@pytest.mark.xfail\` and \`pytest.skip()\` document intent in the report.
 
-Code after \`yield\` in a fixture is teardown and runs after every test, even a failing one. Use it to keep evidence: \`page.screenshot(path=f"{output_path}/cart.png")\` writes into pytest-playwright's per-test \`output_path\` folder (\`test-results/\`). The built-in \`--screenshot only-on-failure\` option does the same for failures.`,
+Code after \`yield\` in a fixture is teardown and runs after every test, even a failing one. Use it to keep evidence: \`page.screenshot(path=f"{output_path}/cart.png")\` writes into pytest-playwright's per-test \`output_path\` folder (\`test-results/\`). To keep it only for failures, compare \`request.session.testsfailed\` before and after the \`yield\`: a bigger number means the test that just ran failed.`,
     learningGoals: [
       "Group related tests in a test class.",
       "Share setup with an autouse fixture without sharing state.",
@@ -29,7 +29,7 @@ def shared_page(browser):
     ],
     practices: [
       {
-        goal: "In a class `TestPractice_1_cart`, open /shop in an autouse fixture. Test A asserts \"Cart (0)\". Test B adds \"Steel Kettlebell\" and asserts \"Cart (1)\".",
+        goal: "In a class `TestPractice_1_cart`, open /shop in an autouse fixture. Test A proves a new shopper's cart is empty. Test B adds Steel Kettlebell and proves the header counts one item.",
         rubric: {
           requires: [
             { pattern: /class\s+\w*[Pp]ractice_1_/, message: "Group the tests in a class TestPractice_1_…." },
@@ -38,15 +38,17 @@ def shared_page(browser):
         }
       },
       {
-        goal: "Write a test marked `@pytest.mark.smoke` that adds an item, opens the cart, and asserts the \"Checkout\" link is visible.",
+        goal: "Mark one test `@pytest.mark.smoke`: it puts an item in the cart (the API is quickest), opens the cart, clicks through to checkout and proves you landed on the checkout page. The checker runs `pytest -m smoke` and expects exactly this test, so leave the mark off the others.",
         rubric: { requires: [{ pattern: /@pytest\.mark\.smoke/, message: "Mark the test with @pytest.mark.smoke." }] }
       },
       {
-        goal: "Add an autouse fixture that `yield`s and then saves `page.screenshot(path=...)` into `output_path`. The test adds an item, removes it, and asserts \"Your cart is empty.\".",
+        goal: "Add an autouse fixture that `yield`s and then saves `page.screenshot(path=...)` into `output_path` ONLY when the test failed. The test adds Steel Kettlebell and Yoga Mat, removes the kettlebell and proves only the mat is left, then removes the mat and proves the cart is empty.",
+        hint: "Take `request: pytest.FixtureRequest`, remember `request.session.testsfailed` before the yield and compare it after: a bigger number means this test failed.",
         rubric: {
           requires: [
             { pattern: /\byield\b/, message: "Run the screenshot after the test, behind yield." },
-            { pattern: /\.screenshot\(/, message: "Save a screenshot as evidence." }
+            { pattern: /\.screenshot\(/, message: "Save a screenshot as evidence." },
+            { pattern: /testsfailed|rep_call|excinfo/, message: "Screenshot only on failure: compare request.session.testsfailed before and after the yield." }
           ]
         }
       }
@@ -76,11 +78,24 @@ def test_discount(page: Page, code: str, total: str): ...`,
     ],
     practices: [
       {
-        goal: "Parametrize `test_practice_1_…` over: mat → 2, kettlebell → 1, protein → 1, zzz → 0 (and \"No products found.\").",
+        goal: "Parametrize `test_practice_1_…` over: mat → 2 products, kettlebell → 1, protein → 1, zzz → 0 (an empty result says so too).",
         rubric: { requires: [{ pattern: /@pytest\.mark\.parametrize\(/, message: "Generate the tests with @pytest.mark.parametrize." }] }
       },
-      { hint: "Seed the cart with page.request.post(\"/api/shop/cart\", data=...)." },
-      {}
+      {
+        goal: "Adjustable Dumbbell ($149.00) is in the cart: seed it through the API, not the UI. Parametrize `test_practice_2_…` over: GYM10 → $134.10, GYM20 → $119.20, a lowercase gym10 → $134.10, and BOGUS → an alert and the total stays $149.00.",
+        hint: "Seed with page.request.post(\"/api/shop/cart\", data={\"productId\": ...}).",
+        rubric: { requires: [{ pattern: /@pytest\.mark\.parametrize\(/, message: "Generate the tests with @pytest.mark.parametrize." }] }
+      },
+      {
+        goal: "Shipping depends on country and on delivery. Parametrize `test_practice_3_…` over every country (Hungary $5.00, Germany $8.00, United States $15.00) with Standard delivery and with Express (+$10.00), on /shop/checkout. Give every row a unique, descriptive id so a failing row names its country and delivery.",
+        hint: "Stack two parametrize decorators, or use pytest.param(..., id=\"germany-express\") per row.",
+        rubric: {
+          requires: [
+            { pattern: /@pytest\.mark\.parametrize\(/, message: "Generate the tests with @pytest.mark.parametrize." },
+            { pattern: /\bids\s*=|pytest\.param\(/, message: "Give the rows readable ids with ids=[...] or pytest.param(..., id=...)." }
+          ]
+        }
+      }
     ]
   },
   "20-page-objects": {
@@ -102,14 +117,25 @@ expect(catalog.cart_link).to_have_text("Cart (1)")`,
     def test_everything(self): ...  # clicks + 12 assertions`,
     practices: [
       {
-        goal: "Complete pages/catalog_page.py with goto(), search_for(term), add_to_cart(name) and cart_link. Add \"Yoga Mat\" and assert cart_link has text \"Cart (1)\".",
+        goal: "Complete pages/catalog_page.py with goto(), search_for(term), add_to_cart(name) and cart_link. Add \"Yoga Mat\" through the page object and prove the header counts one item.",
         hint: "The catalog is paginated and Yoga Mat is on page 2. Let add_to_cart() search for the product first: page objects are the right place to hide that detail.",
         rubric: { requires: [{ pattern: /from\s+pages\./, message: "Import your page objects from pages." }] }
       },
       {
-        goal: "Complete pages/cart_page.py with goto(), set_quantity(name, n) and total. With Yoga Mat in the cart set quantity 3 and assert the total \"$87.00\"."
+        goal: "Complete pages/cart_page.py with goto(), set_quantity(name, n) and total. With Yoga Mat in the cart set quantity 3 and prove the total is three mats' worth.",
+        rubric: { requires: [{ pattern: /CartPage\(/, message: "Use your CartPage." }] }
       },
-      {}
+      {
+        goal: "The starter's \"practice 3\" test already passes, but it is 25 lines of raw locators. Rewrite its body with CatalogPage and CartPage, keeping every assertion. Extend the page objects where they lack something (subtotal, discount, ...). No raw page.get_by_…/page.locator() may be left in the test body.",
+        hint: "Give each missing element an attribute in the page object's __init__ and each repeated action a method.",
+        rubric: {
+          requires: [
+            { pattern: /CatalogPage\(/, message: "Use your CatalogPage." },
+            { pattern: /CartPage\(/, message: "Use your CartPage." }
+          ],
+          forbids: [{ pattern: /\bpage\.(get_by_\w+|locator)\(/, message: "No raw locators in the test body: move them into the page objects." }]
+        }
+      }
     ]
   },
   "21-fixtures": {
@@ -117,6 +143,8 @@ expect(catalog.cart_link).to_have_text("Cart (1)")`,
     theory: `Fixtures are pytest's dependency injection. A function decorated with \`@pytest.fixture\` builds a value, and a test asks for it by naming it as an argument. pytest builds only the fixtures a test uses.
 
 Write setup, then \`yield value\`; everything after the \`yield\` is teardown, which runs even when the test fails. Fixtures can depend on other fixtures (\`page\`, \`browser\`, or your own) and can be scoped per test, module or session. Put shared ones in \`conftest.py\` to reuse them across files without imports.
+
+To give a fixture a per-test choice, parametrize it *indirectly*: \`@pytest.mark.parametrize("seeded_cart", [...], indirect=True)\` hands each value to the fixture as \`request.param\`.
 
 Fixtures replace most autouse setup: setup is explicit, reusable, and only runs when needed. Use \`@pytest.mark.usefixtures("seeded_cart")\` when the test needs the side effect but not the value.`,
     learningGoals: [
@@ -140,13 +168,22 @@ def setup_function():
     ],
     practices: [
       {
-        goal: "Create a catalog_page fixture that opens /shop. Search \"bands\" and assert one article, \"Resistance Bands\".",
+        goal: "Create a catalog_page fixture that opens /shop and returns a CatalogPage. Search for resistance bands and prove exactly one product is listed and that it is the right one.",
         rubric: { requires: [{ pattern: /@pytest\.fixture/, message: "Create fixtures with @pytest.fixture." }] }
       },
-      { goal: "Create an account_page fixture that logs in via page.request and opens /shop/account. Assert \"Signed in as student\"." },
       {
-        goal: "Create a seeded_cart fixture that POSTs 2 × whey-protein before `yield` and DELETEs /api/shop/cart after. Assert the Whey Protein quantity is 2.",
-        rubric: { requires: [{ pattern: /\byield\b/, message: "Clean up after yield." }] }
+        goal: "Create an account_page fixture that signs the student in through page.request (no form) and opens the account page. Prove the page says who is signed in.",
+        rubric: { requires: [{ pattern: /request\.post\(/, message: "Sign in through page.request.post(), not the login form." }] }
+      },
+      {
+        goal: "seeded_cart seeds the cart through the API before `yield` and empties it (DELETE /api/shop/cart) after. What it seeds comes from the fixture's parameter (default: 2 × whey-protein). In your test choose 3 × resistance-bands with `@pytest.mark.parametrize(\"seeded_cart\", [...], indirect=True)` and prove the cart shows three bands: the quantity field and the header count.",
+        hint: "Inside the fixture take `request: pytest.FixtureRequest` and read `getattr(request, \"param\", default)`.",
+        rubric: {
+          requires: [
+            { pattern: /indirect\s*=\s*True/, message: "Pass the choice to the fixture with parametrize(..., indirect=True)." },
+            { pattern: /\byield\b[\s\S]*\.delete\(/, message: "Clean up after yield." }
+          ]
+        }
       }
     ]
   }

@@ -19,6 +19,7 @@ for (const { term, count } of searches) {
 const codes = [
   { code: "GYM10", total: "$134.10" },
   { code: "GYM20", total: "$119.20" },
+  { code: "gym10", total: "$134.10" },
   { code: "BOGUS", total: "$149.00", error: "Invalid discount code." }
 ];
 
@@ -29,21 +30,25 @@ for (const { code, total, error } of codes) {
     await page.getByLabel("Discount code").fill(code);
     await page.getByRole("button", { name: "Apply" }).click();
     if (error) await expect(page.getByRole("alert").filter({ hasText: error })).toBeVisible();
-    else await expect(page.getByText(`Code ${code} applied.`)).toBeVisible();
+    else await expect(page.getByText(`Code ${code.toUpperCase()} applied.`)).toBeVisible();
     await expect(page.getByTestId("cart-total")).toHaveText(total);
   });
 }
 
 const shipping = [
-  { country: "Hungary", cost: "$5.00" },
-  { country: "Germany", cost: "$8.00" },
-  { country: "United States", cost: "$15.00" }
+  { country: "Hungary", base: 5 },
+  { country: "Germany", base: 8 },
+  { country: "United States", base: 15 }
 ];
 
-for (const { country, cost } of shipping) {
-  test(`practice 3: shipping to ${country} costs ${cost}`, async ({ page }) => {
-    await page.goto("/shop/checkout");
-    await page.getByLabel("Country").selectOption({ label: country });
-    await expect(page.getByTestId("checkout-shipping")).toHaveText(cost);
-  });
+for (const { country, base } of shipping) {
+  for (const [delivery, extra] of [["Standard", 0], ["Express", 10]] as const) {
+    const cost = `$${(base + extra).toFixed(2)}`;
+    test(`practice 3: ${delivery} shipping to ${country} costs ${cost}`, async ({ page }) => {
+      await page.goto("/shop/checkout");
+      await page.getByLabel("Country").selectOption({ label: country });
+      await page.getByLabel(delivery).check();
+      await expect(page.getByTestId("checkout-shipping")).toHaveText(cost);
+    });
+  }
 }

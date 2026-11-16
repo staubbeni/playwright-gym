@@ -5,7 +5,7 @@ import { cartSummary, getSession } from "@/lib/shop/store";
 
 export async function POST(request: Request) {
   const { code = "" } = (await request.json().catch(() => ({}))) as { code?: string };
-  const normalized = code.trim().toUpperCase();
+  const normalized = defectActive("lowercaseCodeRejected", request) ? code.trim() : code.trim().toUpperCase();
   const session = getSession(sessionId(request));
   if (!(normalized in discountCodes)) {
     session.discountCode = undefined;

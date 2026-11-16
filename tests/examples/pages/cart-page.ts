@@ -2,10 +2,14 @@ import type { Locator, Page } from "@playwright/test";
 
 export class CartPage {
   readonly total: Locator;
+  readonly subtotal: Locator;
+  readonly discount: Locator;
   readonly discountCode: Locator;
 
   constructor(private readonly page: Page) {
     this.total = page.getByTestId("cart-total");
+    this.subtotal = page.getByTestId("cart-subtotal");
+    this.discount = page.getByTestId("cart-discount");
     this.discountCode = page.getByLabel("Discount code");
   }
 

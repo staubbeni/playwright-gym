@@ -59,6 +59,8 @@ export function DELETE(request: Request) {
   if (!productId) {
     session.cart = [];
     session.discountCode = undefined;
+  } else if (defectActive("removeClearsCart", request)) {
+    session.cart = [];
   } else if (!defectActive("removeIgnored", request)) {
     session.cart = session.cart.filter((item) => item.productId !== productId);
   }

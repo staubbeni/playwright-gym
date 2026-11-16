@@ -47,7 +47,8 @@ export function findProduct(id: string): Product | undefined {
   return products.find((product) => product.id === id);
 }
 
-export function shippingFor(country: string, express: boolean, usShippingWrong = false): number {
+export function shippingFor(country: string, express: boolean, usShippingWrong = false, germanyExpressWrong = false): number {
   const base = usShippingWrong && country === "US" ? 5 : shippingByCountry[country] ?? 0;
-  return base + (express ? 10 : 0);
+  const surcharge = germanyExpressWrong && country === "DE" ? 5 : 10;
+  return base + (express ? surcharge : 0);
 }
