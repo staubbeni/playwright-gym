@@ -32,3 +32,20 @@ test.describe("practice 3: parallel-safe members", () => {
     });
   }
 });
+
+test.describe("practice 3: serial members", () => {
+  test.describe.configure({ mode: "serial" });
+  const name = `serial-${Date.now()}-member-with-a-long-name`;
+
+  test("adds a member", async ({ page }) => {
+    await page.goto("/play/27-config-ci");
+    await page.getByLabel("Member name").fill(name);
+    await page.getByRole("button", { name: "Add member" }).click();
+    await expect(page.getByRole("list", { name: "Members" }).getByText(name, { exact: true })).toHaveCount(1);
+  });
+
+  test("the member is still listed after a reload", async ({ page }) => {
+    await page.goto("/play/27-config-ci");
+    await expect(page.getByRole("list", { name: "Members" }).getByText(name, { exact: true })).toHaveCount(1);
+  });
+});

@@ -1,6 +1,6 @@
 # Lesson 25 — Debugging & trace viewer
-# Assert the report state, give your assertions clear messages, and fail on
-# console errors.
+# Fix a failing test from its call log, explain your assertions, and fail on
+# console and page errors.
 #
 # Copy this file to tests/solutions/ before editing, then run:
 #   pytest tests/solutions/25_debugging_test.py
@@ -8,21 +8,23 @@
 from playwright.sync_api import Page, expect
 
 
-def test_practice_1_assert_the_final_state(page: Page):
+def test_practice_1_read_the_call_log(page: Page):
     page.goto("/play/25-debugging")
-    # TODO (guided): Click "Generate report" and assert the status "Report
-    # ready.". If it fails, run with --tracing on and open the trace with
-    # playwright show-trace test-results/.../trace.zip.
+    # This test FAILS. Run it (add --tracing on to keep a trace), read the
+    # error and the call log, then fix it.
+    page.get_by_role("button", name="Create report").click()
+    expect(page.get_by_role("status")).to_have_text("Report ready.")
 
 
-def test_practice_2_assertion_messages(page: Page):
+def test_practice_2_explain_your_assertions(page: Page):
     page.goto("/play/25-debugging")
-    # TODO (independent): Assert the report table has 3 data rows, with a custom
-    # message as the second argument of expect().
+    # TODO (independent): generate the report, then check that it lists every
+    # region and that every revenue figure is real. Give each expect() a message.
 
 
-def test_practice_3_fail_on_console_errors(page: Page):
+def test_practice_3_a_clean_report(page: Page):
     page.goto("/play/25-debugging")
-    # TODO (challenge): Collect console messages of type "error" during report
-    # generation (page.on("console", ...)) and assert the list is empty once the
-    # report is ready.
+    # TODO (challenge): collect console errors (page.on("console", ...)) AND
+    # uncaught page errors (page.on("pageerror", ...)), record a trace with
+    # page.context.tracing.start(...) / .stop(path=...), and prove both lists
+    # are empty once the report is ready.

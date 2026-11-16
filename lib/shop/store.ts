@@ -18,6 +18,7 @@ type Store = {
   nextOrderId: number;
   lastLogin?: string;
   contextNote?: string;
+  contextUser?: string;
   members: string[];
 };
 const g = globalThis as unknown as { __gymStore?: Store };

@@ -18,10 +18,11 @@ export default function DebuggingPlayground() {
   const generate = () => {
     console.log("report:start");
     setStatus("Generating report...");
+    if (bug("3.2")) window.setTimeout(() => { throw new Error("Cannot read properties of undefined (reading 'total')"); }, 100);
     window.setTimeout(() => {
       if (bug(1)) return;
-      setRows(bug(2) ? regions.slice(0, 2) : regions);
-      if (bug(3)) console.error("Failed to render chart: data is undefined");
+      setRows(bug("2.1") ? regions.slice(0, 2) : regions.map((row) => (bug("2.2") && row.region === "West" ? { ...row, revenue: "$0" } : row)));
+      if (bug("3.1")) console.error("Failed to render chart: data is undefined");
       setStatus("Report ready.");
       console.log("report:done");
     }, 600);

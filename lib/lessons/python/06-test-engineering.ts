@@ -10,15 +10,22 @@ export const testEngineering: Record<string, PythonLesson> = {
     goodExample: `expect(rows, "report should list three regions").to_have_count(3)`,
     badExample: `page.wait_for_timeout(5000)  # "maybe it's just slow"`,
     practices: [
-      { goal: "Click \"Generate report\" and assert the status \"Report ready.\". If it fails, run with --tracing on and open the trace." },
+      { goal: "The starter test FAILS. Run it, read the error and its call log, and fix the test so it generates the report and sees it become ready. Tip: --tracing on keeps a trace to open." },
       {
+        goal: "Generate the report, then check that it lists every region and that every revenue figure is real. Give each `expect()` a message that says what you meant to prove.",
         rubric: {
           requires: [{ pattern: /expect\([^)]*?,\s*["'][^"']*["']\s*\)\s*\.\s*(not_)?to_/, message: "Pass a message as the second argument of expect()." }]
         }
       },
       {
-        goal: "Collect console messages of type \"error\" during report generation (`page.on(\"console\", ...)`) and assert the list is empty once the report is ready.",
-        rubric: { requires: [{ pattern: /\.on\(\s*["'](console|pageerror)["']/, message: "Listen to the console or pageerror event." }] }
+        goal: "Generating the report must not leave errors behind. Collect console messages of type \"error\" (`page.on(\"console\", ...)`) AND uncaught page errors (`page.on(\"pageerror\", ...)`), record a trace with `context.tracing.start(...)` / `context.tracing.stop(path=...)`, and prove both lists are empty once the report is ready.",
+        rubric: {
+          requires: [
+            { pattern: /\.on\(\s*["']console["']/, message: "Listen to the console event." },
+            { pattern: /\.on\(\s*["']pageerror["']/, message: "Listen to the pageerror event." },
+            { pattern: /tracing\.start\(/, message: "Record a trace with context.tracing.start()." }
+          ]
+        }
       }
     ]
   },
@@ -31,7 +38,11 @@ If data shows up in a second context, it isn't stored in the browser. It leaked 
     goodExample: `guest = browser.new_context()
 guest_page = guest.new_page()`,
     badExample: `# Assuming isolation without ever testing it`,
-    practices: [{}, { rubric: { requires: [{ pattern: /new_context\(/, message: "Create a second context." }] } }, {}]
+    practices: [
+      {},
+      { goal: "Prove that a note saved here is invisible in a second, brand-new browser context (`browser.new_context()`). Close the context when you are done.", rubric: { requires: [{ pattern: /new_context\(/, message: "Create a second context." }] } },
+      { rubric: { requires: [{ pattern: /new_context\(/, message: "Create a second context for user B." }] } }
+    ]
   },
   "27-config-ci": {
     concepts: ["pytest options", "pytest-xdist", "Retry loops", "CI"],
@@ -62,11 +73,11 @@ while True:
     ],
     practices: [
       {
-        goal: "With `@pytest.mark.browser_context_args(viewport={\"width\": 1280, \"height\": 720})` assert \"Viewport: 1280 × 720\".",
+        goal: "Make the test run in a 1280 × 720 window with `@pytest.mark.browser_context_args(...)`, and prove the page agrees.",
         rubric: { requires: [{ pattern: /browser_context_args/, message: "Configure the viewport with browser_context_args." }] }
       },
       {
-        goal: "The service reports \"Degraded\" for the first refreshes. Click \"Refresh status\" in a retry loop with a deadline until a short `to_have_text(\"Healthy\", timeout=1_000)` passes.",
+        goal: "The status service reports \"Degraded\" for its first few checks. Click \"Refresh status\" in a retry loop with a deadline until a short `to_have_text(..., timeout=1_000)` sees Healthy.",
         rubric: {
           requires: [
             { pattern: /\bwhile\b|\bfor\b/, message: "Retry the click and assertion in a loop." },
@@ -75,7 +86,7 @@ while True:
         }
       },
       {
-        goal: "Parametrize the test over two roles. Each adds a member with a unique name (`uuid.uuid4()`) and asserts exactly one list item has that name.",
+        goal: "Parametrize one test over two roles: each adds a member with a unique name (`uuid.uuid4()`) and proves exactly one list item shows that name in full. Add a second `test_practice_3_...` that adds a member, reloads the page and proves the member is still listed.",
         rubric: { requires: [{ pattern: /uuid|time\.time\(|time_ns\(/, message: "Generate a unique name per test." }] }
       }
     ]
@@ -99,7 +110,12 @@ assert page.get_by_test_id("score").text_content() == "Score: 42"`,
     practices: [
       {},
       { rubric: { forbids: [{ pattern: /\.nth\(|\.first\b/, message: "Don't depend on position." }] } },
-      {}
+      {},
+      {},
+      {
+        goal: "Type a query into \"Find exercise\" one key at a time with `press_sequentially()`: every keystroke is a request and the answers arrive in random order. Prove that only the matching exercise stays listed once you stop typing, and that a query with no matches says so.",
+        rubric: { requires: [{ pattern: /press_sequentially\(/, message: "Type key by key with press_sequentially()." }] }
+      }
     ]
   },
   "29-capstone": {

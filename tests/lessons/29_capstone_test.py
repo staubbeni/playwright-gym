@@ -6,7 +6,7 @@
 # The checker:
 #   1. runs the whole file against the normal shop: everything must pass;
 #   2. runs it 8 more times, each with one hidden bug planted. Your suite
-#      "catches" a bug if at least one test fails. Goal: catch at least 6.
+#      "catches" a bug if at least one test fails. Goal: catch at least 7.
 #
 # The bugs hide in: catalog search, product details, cart quantities,
 # discount codes, checkout validation, order confirmation, login, and

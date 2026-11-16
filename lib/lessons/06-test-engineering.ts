@@ -26,25 +26,40 @@ export const testEngineering: Lesson[] = [
       "Ignoring console errors because the UI looks fine.",
       "Assertion failures that don't say what the test meant to check."
     ],
-    mission: "Assert the report state, give your assertions clear messages, and fail on console errors.",
+    mission: "Fix a failing test from its call log, explain your assertions, and fail on console and page errors.",
     target: "/play/25-debugging",
     practices: [
       {
-        title: "Assert the final state",
-        goal: "Click \"Generate report\" and assert the status \"Report ready.\". If it fails, run with --trace on and open the trace.",
-        difficulty: "guided"
+        title: "Read the call log",
+        goal: "The starter test FAILS. Run it, read the error and its call log, and fix the test so it generates the report and sees it become ready.",
+        difficulty: "guided",
+        hint: "The call log lists what Playwright could find. Match the page, not your memory of it."
       },
       {
-        title: "Assertion messages",
-        goal: "Assert the report table has 3 data rows, with a custom message as the second argument of expect().",
+        title: "Explain your assertions",
+        goal: "Generate the report, then check in two named test.step() blocks that it lists every region and that every revenue figure is real. Give each assertion a message that says what you meant to prove.",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /expect\([^;]*?,\s*["'`][^"'`]*["'`]\s*\)\s*\.\s*(not\.)?to/, message: "Pass a message as the second argument of expect()." }] }
+        bugs: ["A region row is missing", "A revenue figure is $0"],
+        rubric: {
+          requires: [
+            { pattern: /test\.step\(/, message: "Group the checks with test.step()." },
+            { pattern: /expect\([^;]*?,\s*["'`][^"'`]*["'`]\s*\)\s*\.\s*(not\.)?to/, message: "Pass a message as the second argument of expect()." }
+          ]
+        }
       },
       {
-        title: "Fail on console errors",
-        goal: "Collect console messages of type \"error\" during report generation and assert the list is empty once the report is ready.",
+        title: "A clean report",
+        goal: "Generating the report must not leave errors behind. Collect browser console errors AND uncaught page errors, keep a trace of every run with a top-level test.use({ trace }), and prove both lists are empty once the report is ready.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /\.on\(\s*["'](console|pageerror)["']/, message: "Listen to the console or pageerror event." }] }
+        hint: "The page also logs ordinary messages. Only type \"error\" counts.",
+        bugs: ["A console error is logged", "An uncaught page error is thrown"],
+        rubric: {
+          requires: [
+            { pattern: /\.on\(\s*["']console["']/, message: "Listen to the console event." },
+            { pattern: /\.on\(\s*["']pageerror["']/, message: "Listen to the pageerror event." },
+            { pattern: /test\.use\(\s*\{[^}]*trace/, message: "Turn tracing on with a top-level test.use({ trace })." }
+          ]
+        }
       }
     ],
     concepts: ["Call log", "Trace viewer", "Console capture"],
@@ -78,24 +93,27 @@ const guestPage = await guest.newPage();`,
       "Using the same page for two \"users\".",
       "Assuming that a new page shares nothing (pages in one context share storage)."
     ],
-    mission: "Save a note, prove another context can't see it, and prove a login doesn't leak to a guest.",
+    mission: "Save a note, prove another context can't see it, and prove two users share the roster but not their sign-in.",
     target: "/play/26-contexts",
     practices: [
       {
         title: "Save in this context",
-        goal: "Fill \"Session note\" with \"hello\", click \"Save note\", reload, and assert \"Saved note: hello\".",
+        goal: "Save a note and prove it is still shown after a reload.",
         difficulty: "guided"
       },
       {
         title: "Not visible elsewhere",
-        goal: "After saving, open the page in a new context and assert it shows \"No saved note.\".",
+        goal: "Prove that a note saved here is invisible in a second, brand-new browser context. Close the context when you are done.",
         difficulty: "independent",
         rubric: { requires: [{ pattern: /newContext\(/, message: "Create a second context." }] }
       },
       {
-        title: "Two users",
-        goal: "Log in context A via its page.request. In a fresh guest context open /shop/account and assert it lands on /shop/login, while A sees \"Signed in as student\".",
-        difficulty: "challenge"
+        title: "Two users, one roster",
+        goal: "User A signs in and adds a teammate with a unique name. User B, in a second context, must not look signed in as A, yet must see A's teammate after a reload. Close the contexts you create.",
+        difficulty: "challenge",
+        hint: "Cookies live in the context, but the roster lives on the server.",
+        bugs: ["A teammate is only kept in the page that added it", "A's sign-in leaks to other contexts"],
+        rubric: { requires: [{ pattern: /newContext\(/, message: "Create a second context for user B." }] }
       }
     ],
     concepts: ["Browser contexts", "Isolation", "Multi-user tests"],
@@ -128,26 +146,33 @@ Parallel tests must not collide. Generate unique data per test (\`test.info().te
       "Raising retries to make a flaky test green.",
       "Different config locally and in CI without knowing why."
     ],
-    mission: "Configure the viewport for a file, poll a service until it is healthy, and add unique team members in parallel.",
+    mission: "Configure the viewport per describe, poll a service until it is healthy, and keep shared data safe in parallel and serial tests.",
     target: "/play/27-config-ci",
     practices: [
       {
         title: "Per-test configuration",
-        goal: "In a describe with test.use({ viewport: { width: 1280, height: 720 } }) assert \"Viewport: 1280 × 720\".",
+        goal: "Make the tests in one describe run in a 1280 × 720 window with test.use(), and prove the page agrees.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /test\.use\(/, message: "Configure with test.use()." }] }
       },
       {
-        title: "Retry a block",
-        goal: "The service reports \"Degraded\" for the first refreshes. Use expect(...).toPass() to click \"Refresh status\" until it says \"Healthy\".",
+        title: "Eventually healthy",
+        goal: "The status service reports \"Degraded\" for its first few checks. Make the test click \"Refresh status\" until the page reports Healthy, without sleeping or raising retries.",
         difficulty: "independent",
         rubric: { requires: [{ pattern: /\.toPass\(/, message: "Use toPass()." }] }
       },
       {
-        title: "Parallel-safe data",
-        goal: "In a parallel describe, add a member with a unique name (e.g. from test.info().testId) and assert exactly one list item has that name.",
+        title: "Parallel and serial",
+        goal: "In a describe configured as parallel, two tests each add a member with a unique name and prove exactly one list item shows that name in full. In a second describe configured as serial, one test adds a member and the next test reloads the page and proves the member is still listed.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /mode:\s*["']parallel["']/, message: "Configure the describe as parallel." }] }
+        hint: "Both describes should start with \"practice 3:\" so the checker finds them.",
+        bugs: ["Adding a member creates a duplicate", "Long names are cut off in the list", "Reloading the page loses the members"],
+        rubric: {
+          requires: [
+            { pattern: /mode:\s*["']parallel["']/, message: "Configure one describe as parallel." },
+            { pattern: /mode:\s*["']serial["']/, message: "Configure one describe as serial." }
+          ]
+        }
       }
     ],
     concepts: ["Projects", "Workers & sharding", "toPass", "CI"],
@@ -163,7 +188,7 @@ Parallel tests must not collide. Generate unique data per test (\`test.info().te
     module: "test-engineering",
     title: "Flaky test clinic",
     shortDescription: "Diagnose and fix",
-    description: "The starter tests pass sometimes. Find the cause of each flake and fix it properly.",
+    description: "The starter tests pass sometimes. Find the cause of each flake, from sleeps to animations and network races, and fix it properly.",
     learningGoals: [
       "Reproduce flakiness with --repeat-each.",
       "Recognize sleeps, snapshot reads, and order assumptions as flake sources.",
@@ -185,7 +210,7 @@ expect(await page.getByTestId("score").textContent()).toBe("Score: 42");`,
       "Adding retries and calling it fixed.",
       "Asserting order when the product doesn't promise order."
     ],
-    mission: "Fix three flaky tests: a racy score, an unordered activity feed, and a short-lived toast.",
+    mission: "Fix five flaky tests: a racy score, an unordered feed, a short-lived toast, an animated total, and an out-of-order search.",
     target: "/play/28-flaky-clinic",
     practices: [
       {
@@ -202,7 +227,21 @@ expect(await page.getByTestId("score").textContent()).toBe("Score: 42");`,
       {
         title: "The short-lived toast",
         goal: "Click \"Sync now\" and assert the toast \"Synced.\" without waiting for it to disappear first.",
-        difficulty: "challenge"
+        difficulty: "independent"
+      },
+      {
+        title: "The counting total",
+        goal: "Click \"Count up\". The total animates for a random time, then stops. Prove it settles on its final figure and that the page then says counting is finished.",
+        difficulty: "challenge",
+        hint: "A snapshot read like textContent() catches the number halfway through the animation.",
+        bugs: ["The total stops one short", "The finished message never appears"]
+      },
+      {
+        title: "The out-of-order search",
+        goal: "Type a query into \"Find exercise\" one key at a time with pressSequentially(): every keystroke is a request and the answers arrive in random order. Prove that only the matching exercise stays listed once you stop typing, and that a query with no matches says so.",
+        difficulty: "challenge",
+        bugs: ["A slow, old response overwrites the newest results", "A search with no matches shows nothing"],
+        rubric: { requires: [{ pattern: /pressSequentially\(/, message: "Type key by key with pressSequentially()." }] }
       }
     ],
     concepts: ["--repeat-each", "Flake sources", "Root-cause fixes"],
@@ -218,7 +257,7 @@ expect(await page.getByTestId("score").textContent()).toBe("Score: 42");`,
     module: "test-engineering",
     title: "Capstone: Gym Shop suite",
     shortDescription: "Put it all together",
-    description: "Write a complete end-to-end suite for the Gym Shop. The checker plants 8 hidden bugs, and your suite must catch at least 6.",
+    description: "Write a complete end-to-end suite for the Gym Shop. The checker plants 8 hidden bugs, and your suite must catch at least 7.",
     learningGoals: [
       "Plan coverage for a whole application.",
       "Combine page objects, fixtures, API seeding, and web-first assertions.",
@@ -236,7 +275,7 @@ Reuse what you've built: page objects from lesson 20, fixtures from lesson 21, a
       "One huge test where the first failure hides everything after it.",
       "Not testing the unhappy paths (invalid email, wrong password)."
     ],
-    mission: "Write a suite that covers the whole Gym Shop and catches at least 6 of 8 planted bugs.",
+    mission: "Write a suite that covers the whole Gym Shop and catches at least 7 of 8 planted bugs.",
     target: "/shop",
     practices: [
       { title: "Catalog search", goal: "Searching filters the product list correctly.", difficulty: "challenge" },
@@ -251,6 +290,6 @@ Reuse what you've built: page objects from lesson 20, fixtures from lesson 21, a
     concepts: ["Coverage planning", "Mutation score", "Suite design"],
     resources: [{ label: "Best practices", url: "https://playwright.dev/docs/best-practices" }],
     prerequisites: ["Everything before this lesson"],
-    check: { capstone: { minCaught: 6 } }
+    check: { capstone: { minCaught: 7 } }
   }
 ];
