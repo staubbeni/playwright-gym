@@ -26,11 +26,11 @@ def test_practice_2_save_is_disabled_until_the_name_is_valid(page: Page):
     expect(page.get_by_test_id("profile-status")).to_have_text("Profile saved for Ada.")
 
 
-def test_practice_3_tags_are_listed_in_order(page: Page):
-    for tag in ["playwright", "testing", "qa"]:
+def test_practice_3_tags_are_unique_and_listed_in_order(page: Page):
+    for tag in ["playwright", "testing", "qa", "qa"]:
         page.get_by_label("New tag").fill(tag)
         page.get_by_role("button", name="Add tag").click()
     tags = page.get_by_role("list", name="Tags").get_by_role("listitem")
-    expect(tags).to_have_count(3)
     expect(tags).to_have_text(["playwright", "testing", "qa"])
     expect(page.get_by_test_id("tag-count")).to_have_text("3 tags")
+    expect(page.get_by_test_id("tag-message")).to_have_text('"qa" already exists.')

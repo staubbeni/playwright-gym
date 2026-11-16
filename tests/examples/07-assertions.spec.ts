@@ -23,13 +23,13 @@ test("practice 2: save is disabled until the name is valid", async ({ page }) =>
   await expect(page.getByTestId("profile-status")).toHaveText("Profile saved for Ada.");
 });
 
-test("practice 3: tags are listed in order", async ({ page }) => {
-  for (const tag of ["playwright", "testing", "qa"]) {
+test("practice 3: tags are unique and listed in order", async ({ page }) => {
+  for (const tag of ["playwright", "testing", "qa", "qa"]) {
     await page.getByLabel("New tag").fill(tag);
     await page.getByRole("button", { name: "Add tag" }).click();
   }
   const tags = page.getByRole("list", { name: "Tags" }).getByRole("listitem");
-  await expect.soft(tags).toHaveCount(3);
   await expect.soft(tags).toHaveText(["playwright", "testing", "qa"]);
   await expect.soft(page.getByTestId("tag-count")).toHaveText("3 tags");
+  await expect.soft(page.getByTestId("tag-message")).toHaveText('"qa" already exists.');
 });

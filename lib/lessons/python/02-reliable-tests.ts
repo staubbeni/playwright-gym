@@ -13,15 +13,26 @@ export const reliableTests: Record<string, PythonLesson> = {
     ],
     practices: [
       {
+        partial: "```\npage.goto(\"/shop\")\npage.get_by_role(\"article\").filter(has_text=\"Steel Kettlebell\").get_by_role(\"button\", name=\"Add to cart\").click()\n```",
         rubric: {
-          requires: [{ pattern: /\.filter\(/, message: "Scope to the product card with filter()." }],
-          forbids: [{ pattern: /nth-child|\.nth\(/, message: "Don't pick the card by position." }]
+          requires: [{ pattern: /\.filter\(/, message: "Scope the button to the right card with filter()." }],
+          forbids: [{ pattern: /\.(first|last|nth)\b/, message: "Don't pick by position. Filter by content." }]
         }
       },
-      { rubric: { requires: [{ pattern: /to_have_count\(/, message: "Use to_have_count()." }] } },
       {
-        goal: "Assert that exactly 3 products on the first page carry a \"Sale\" badge, using filter(has=...).",
-        rubric: { requires: [{ pattern: /has\s*=\s*page\./, message: "Use filter(has=page.get_by_...)." }] }
+        goal: "Prove the search really narrows the list: \"mat\" shows exactly 2 products, and \"kettlebell\" shows exactly 1 product whose heading is \"Steel Kettlebell\".",
+        hint: "Reuse one products locator for both searches. A heading inside the card is a child: products.get_by_role(\"heading\", ...).",
+        rubric: { requires: [{ pattern: /to_have_count\(/, message: "Use to_have_count() on the product list." }] }
+      },
+      {
+        goal: "Of the 8 products on the first page, exactly 3 carry the \"Sale\" badge and exactly 5 do not. Express \"has the badge\" and \"doesn't have it\" with filter, not with two separate hand-written selectors.",
+        hint: "filter(has=badge) keeps cards that contain the badge, filter(has_not=badge) keeps the others. Use exact matching so \"Sale\" doesn't match other text.",
+        rubric: {
+          requires: [
+            { pattern: /has\s*=/, message: "Use filter(has=...) for the sale cards." },
+            { pattern: /has_not\s*=/, message: "Use filter(has_not=...) for the cards without the badge." }
+          ]
+        }
       }
     ]
   },
@@ -45,18 +56,21 @@ Python's \`expect\` has no soft mode: the first failing assertion stops the test
       "Asserting the same thing twice instead of the different states that matter."
     ],
     practices: [
-      { rubric: { requires: [{ pattern: /to_be_checked\(/, message: "Use to_be_checked()." }] } },
+      {
+        rubric: { requires: [{ pattern: /to_be_checked\(/, message: "Use to_be_checked() for the checkbox." }] }
+      },
       {
         rubric: {
           requires: [
-            { pattern: /to_be_disabled\(|not_to_be_enabled\(/, message: "Assert the disabled state first." },
-            { pattern: /to_have_value\(/, message: "Use to_have_value()." }
+            { pattern: /to_be_disabled\(/, message: "Use to_be_disabled() before the name is valid." },
+            { pattern: /to_be_enabled\(/, message: "Use to_be_enabled() once it is." }
           ]
         }
       },
       {
-        goal: "Add the tags playwright, testing and qa. Assert the Tags list has 3 items, their texts in order with `to_have_text([...])`, and the counter \"3 tags\".",
-        rubric: { requires: [{ pattern: /to_have_text\(\s*\[/, message: "Assert the texts in order with to_have_text([...])." }] }
+        goal: "Add the tags playwright, testing and qa, then try to add \"qa\" a second time. Prove all of it: the tags in order, the counter \"3 tags\", and that the duplicate was refused with the message \"qa\" already exists. Python's `expect` has no soft mode, so a failing check stops the test: order the checks from most to least important.",
+        hint: "to_have_text([...]) checks the count and the text of every item in order. Fix the first failure and rerun to see the next one.",
+        rubric: { requires: [{ pattern: /to_have_text\(\s*\[/, message: "Assert the tags with to_have_text([...])." }] }
       }
     ]
   },
@@ -76,13 +90,16 @@ assert page.locator(".review").count() == 3`,
       "Asserting the loading indicator but never the loaded content."
     ],
     practices: [
-      { rubric: { requires: [{ pattern: /to_be_hidden\(|not_to_be_visible\(/, message: "Assert that the loading text is gone." }] } },
+      {},
       {},
       {
+        goal: "The starter adds the kettlebell to the cart by sleeping and reading text once. It passes, but it is slow and fragile. Rewrite it without any sleep or snapshot read: let click() wait for the button to become enabled and let an assertion wait for the new cart count.",
+        hint: "click() waits until the button is visible, stable and enabled. to_have_text() retries until the cart link says \"Cart (1)\".",
         rubric: {
           forbids: [
-            { pattern: /wait_for_selector|wait_for_function/, message: "click() already waits for the button." },
-            { pattern: /force\s*=\s*True/, message: "force=True skips the enabled check." }
+            { pattern: /wait_for_timeout|wait_for_selector|wait_for_function/, message: "No manual waits: click() and expect() wait for you." },
+            { pattern: /text_content\(|inner_text\(|is_enabled\(|is_visible\(/, message: "Reading once doesn't retry. Use a web-first assertion." },
+            { pattern: /force\s*=\s*True/, message: "Do not force the click." }
           ]
         }
       }
@@ -94,7 +111,22 @@ expect(toast).to_have_text("Preferences saved.")
 expect(toast).to_be_hidden()`,
     badExample: `page.wait_for_timeout(2500)
 expect(page.get_by_text("Preferences saved.")).to_be_visible()`,
-    practices: [{}, { rubric: { requires: [{ pattern: /to_be_hidden\(/, message: "Use to_be_hidden()." }] } }, {}]
+    practices: [
+      {
+        goal: "Click \"Save preferences\" and prove two things about the toast: it says \"Preferences saved.\", and it goes away on its own.",
+        rubric: { requires: [{ pattern: /to_be_hidden\(|to_have_count\(\s*0\s*\)|not_to_be_visible\(/, message: "Assert that the toast goes away." }] }
+      },
+      {
+        goal: "\"Send 3 emails\" shows three toasts one after another. Prove that all three are on screen together, in the order they were sent: Email 1 sent., Email 2 sent., Email 3 sent..",
+        hint: "One locator that matches every toast plus to_have_text([...]) checks the count and the order in a single retrying assertion.",
+        rubric: { requires: [{ pattern: /to_have_text\(\s*\[/, message: "Assert the whole stack with to_have_text([...])." }] }
+      },
+      {
+        goal: "Click \"Delete draft\". The toast reads \"Draft deleted. Undo in 4s\" and the number keeps counting down, so match only the part that doesn't change. Click \"Undo\" and prove the draft \"Weekly plan\" is back and the toast \"Draft restored.\" appeared.",
+        hint: "An exact string will flake because the countdown changes every second. A regular expression such as re.compile(r\"^Draft deleted\\.\") or to_contain_text() matches the stable part.",
+        rubric: { requires: [{ pattern: /to_contain_text\(|to_have_text\(\s*re\.compile/, message: "Match the stable part of the countdown text (regular expression or to_contain_text)." }] }
+      }
+    ]
   },
   "10-keyboard-mouse": {
     goodExample: `page.get_by_text("Write tests").drag_to(page.get_by_role("list", name="Done"))`,
@@ -104,7 +136,8 @@ expect(page.get_by_text("Preferences saved.")).to_be_visible()`,
       { rubric: { requires: [{ pattern: /\.hover\(/, message: "Use hover()." }] } },
       { rubric: { requires: [{ pattern: /drag_to\(/, message: "Use drag_to()." }] } }
     ]
-  },
+  }
+,
   "11-dialogs-files": {
     theory: `Native \`alert\`, \`confirm\`, and \`prompt\` dialogs are dismissed automatically unless you handle them. Register the handler **before** the click that opens the dialog: \`page.once("dialog", lambda dialog: dialog.accept())\`. Inside a handler function you can also check \`dialog.message\`.
 

@@ -1,6 +1,6 @@
-// Lesson 07 — Web-first assertions
-// Prove that a checkbox, a disabled-until-valid button, and a tag list
-// behave correctly.
+// Lesson 07 — Assertions
+// Pick the matcher that states the expected state: checked, disabled, value,
+// list text, and soft assertions.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 07-assertions
@@ -21,7 +21,8 @@ test("practice 2: disabled until valid", async ({ page }) => {
 
 test("practice 3: soft list assertions", async ({ page }) => {
   await page.goto("/play/07-assertions");
-  // TODO (challenge): Add the tags playwright, testing and qa. With
-  // expect.soft, assert the Tags list has 3 items, their texts in order, and
-  // the counter "3 tags".
+  // TODO (challenge): add the tags playwright, testing and qa, then try to add
+  // "qa" a second time. With expect.soft prove: the tags in order (one
+  // toHaveText([...])), the counter "3 tags", and the duplicate message
+  // `"qa" already exists.`.
 });

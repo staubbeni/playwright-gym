@@ -1,28 +1,29 @@
 # Lesson 08 — Auto-waiting & loading
-# Wait for the catalog, lazy-loaded reviews, and a stock check, all without
-# sleeps.
+# Let Playwright wait for you: catalog loading, lazy reviews, and a sleepy test
+# to repair.
 #
 # Copy this file to tests/solutions/ before editing, then run:
-#   pytest tests/solutions/08_auto_waiting_test.py
 #   npm run check -- 08-auto-waiting --python
 from playwright.sync_api import Page, expect
 
 
 def test_practice_1_wait_for_the_catalog(page: Page):
     page.goto("/shop")
-    # TODO (guided): Open /shop and assert that 8 product articles appear and
-    # that "Loading products..." is hidden.
+    # TODO (guided): Assert that 8 product articles appear and that "Loading
+    # products..." is hidden.
 
 
 def test_practice_2_lazy_reviews(page: Page):
-    page.goto("/shop")
-    # TODO (independent): On /shop/products/steel-kettlebell click "Show
-    # reviews" and assert the first review says "Solid grip and perfect
-    # weight.".
+    page.goto("/shop/products/steel-kettlebell")
+    # TODO (independent): click "Show reviews" and assert the first review says
+    # "Solid grip and perfect weight.".
 
 
-def test_practice_3_click_when_enabled(page: Page):
-    page.goto("/shop")
-    # TODO (challenge): On the same product page click "Add to cart" (disabled
-    # while stock is checked) and assert the header link shows "Cart (1)". Don't
-    # add any waits.
+# Practice 3 works, but only because it sleeps and reads the text once. Rewrite
+# it with no sleep and no snapshot read.
+def test_practice_3_replace_the_sleeps(page: Page):
+    page.goto("/shop/products/steel-kettlebell")
+    page.wait_for_timeout(3000)
+    page.get_by_role("button", name="Add to cart").click()
+    page.wait_for_timeout(1000)
+    assert page.get_by_role("link", name="Cart (1)").text_content() == "Cart (1)"

@@ -16,7 +16,7 @@ def test_practice_2_waits_for_lazy_reviews(page: Page):
     expect(reviews.first).to_have_text("Solid grip and perfect weight.")
 
 
-def test_practice_3_clicks_as_soon_as_the_button_is_enabled(page: Page):
+def test_practice_3_no_sleeps_no_snapshot_reads(page: Page):
     page.goto("/shop/products/steel-kettlebell")
     page.get_by_role("button", name="Add to cart").click()
     expect(page.get_by_role("link", name=re.compile("Cart"))).to_have_text("Cart (1)")

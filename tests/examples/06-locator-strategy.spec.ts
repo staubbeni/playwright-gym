@@ -13,12 +13,22 @@ test("practice 1: adds one specific product", async ({ page }) => {
   await expect(page.getByTestId("cart-message")).toHaveText("Steel Kettlebell added to cart.");
 });
 
-test("practice 2: counts search results", async ({ page }) => {
-  await page.getByRole("searchbox", { name: "Search products" }).fill("mat");
-  await expect(page.getByRole("article")).toHaveCount(2);
+test("practice 2: search narrows the catalog", async ({ page }) => {
+  const products = page.getByRole("article");
+  const search = page.getByRole("searchbox", { name: "Search products" });
+
+  await search.fill("mat");
+  await expect(products).toHaveCount(2);
+
+  await search.fill("kettlebell");
+  await expect(products).toHaveCount(1);
+  await expect(products.getByRole("heading", { name: "Steel Kettlebell" })).toBeVisible();
 });
 
-test("practice 3: counts products on sale", async ({ page }) => {
-  const onSale = page.getByRole("article").filter({ has: page.getByText("Sale", { exact: true }) });
-  await expect(onSale).toHaveCount(3);
+test("practice 3: splits sale and regular products", async ({ page }) => {
+  const products = page.getByRole("article");
+  const badge = page.getByText("Sale", { exact: true });
+
+  await expect(products.filter({ has: badge })).toHaveCount(3);
+  await expect(products.filter({ hasNot: badge })).toHaveCount(5);
 });

@@ -1,9 +1,8 @@
-# Lesson 07 — Web-first assertions
-# Prove that a checkbox, a disabled-until-valid button, and a tag list
-# behave correctly.
+# Lesson 07 — Assertions
+# Pick the matcher that states the expected state: checked, disabled, value,
+# list text, and duplicate handling.
 #
 # Copy this file to tests/solutions/ before editing, then run:
-#   pytest tests/solutions/07_assertions_test.py
 #   npm run check -- 07-assertions --python
 from playwright.sync_api import Page, expect
 
@@ -21,8 +20,8 @@ def test_practice_2_disabled_until_valid(page: Page):
     # assert "Profile saved for Ada.".
 
 
-def test_practice_3_list_assertions(page: Page):
+def test_practice_3_soft_list_assertions(page: Page):
     page.goto("/play/07-assertions")
-    # TODO (challenge): Add the tags playwright, testing and qa. Assert the Tags
-    # list has 3 items, their texts in order (to_have_text with a list), and the
-    # counter "3 tags".
+    # TODO (challenge): add the tags playwright, testing and qa, then try to add
+    # "qa" a second time. Prove: the tags in order (one to_have_text([...])), the
+    # counter "3 tags", and the duplicate message `"qa" already exists.`.

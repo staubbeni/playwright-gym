@@ -11,6 +11,7 @@ export default function AssertionsPlayground() {
   const [saved, setSaved] = useState("");
   const [tag, setTag] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [tagMessage, setTagMessage] = useState("");
 
   return (
     <PlaygroundCard lessonId="07-assertions" title="Profile settings">
@@ -43,9 +44,16 @@ export default function AssertionsPlayground() {
             className="secondary-button"
             type="button"
             onClick={() => {
-              if (!tag.trim()) return;
-              setTags((current) => (bug(3) && current.length >= 2 ? current : [...current, tag.trim()]));
+              const value = tag.trim();
+              if (!value) return;
               setTag("");
+              if (bug("3.1") && tags.length >= 2) return;
+              if (!bug("3.2") && tags.includes(value)) {
+                setTagMessage(`"${value}" already exists.`);
+                return;
+              }
+              setTagMessage("");
+              setTags([...tags, value]);
             }}
           >
             Add tag
@@ -54,7 +62,8 @@ export default function AssertionsPlayground() {
         <ul aria-label="Tags" className="tag-list">
           {tags.map((item) => <li key={item}>{item}</li>)}
         </ul>
-        <p data-testid="tag-count">{tags.length} tags</p>
+        <p data-testid="tag-count">{bug("3.3") ? Math.max(0, tags.length - 1) : tags.length} tags</p>
+        <p data-testid="tag-message" role="status">{tagMessage}</p>
       </Panel>
     </PlaygroundCard>
   );

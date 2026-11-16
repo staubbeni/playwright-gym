@@ -13,7 +13,7 @@ test("practice 2: waits for lazy reviews", async ({ page }) => {
   await expect(reviews.first()).toHaveText("Solid grip and perfect weight.");
 });
 
-test("practice 3: clicks as soon as the button is enabled", async ({ page }) => {
+test("practice 3: no sleeps, no snapshot reads", async ({ page }) => {
   await page.goto("/shop/products/steel-kettlebell");
   await page.getByRole("button", { name: "Add to cart" }).click();
   await expect(page.getByRole("link", { name: /Cart/ })).toHaveText("Cart (1)");

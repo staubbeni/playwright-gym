@@ -32,23 +32,31 @@ Priority list for choosing locators: role + name → label → placeholder/text 
       {
         title: "Add one specific product",
         goal: "On /shop add \"Steel Kettlebell\" to the cart and assert the message \"Steel Kettlebell added to cart.\".",
+        partial: "```\nawait page.goto(\"/shop\");\nawait page\n  .getByRole(\"article\")\n  .filter({ hasText: \"Steel Kettlebell\" })\n  .getByRole(\"button\", { name: \"Add to cart\" })\n  .click();\n```",
         difficulty: "guided",
         rubric: {
-          requires: [{ pattern: /\.filter\(/, message: "Scope the card with filter()." }],
-          forbids: [{ pattern: /nth-child|\.nth\(/, message: "Avoid positional locators." }]
+          requires: [{ pattern: /filter\(/, message: "Scope the button to the right card with filter()." }],
+          forbids: [{ pattern: /\.(first|last|nth)\(/, message: "Don't pick by position. Filter by content." }]
         }
       },
       {
-        title: "Count search results",
-        goal: "Search for \"mat\" in the \"Search products\" field and assert that exactly 2 product articles are shown.",
+        title: "Search narrows the catalog",
+        goal: "Prove the search really narrows the list: \"mat\" shows exactly 2 products, and \"kettlebell\" shows exactly 1 product whose heading is \"Steel Kettlebell\".",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /toHaveCount\(/, message: "Use toHaveCount()." }] }
+        hint: "Reuse one products locator for both searches. A heading inside the card is a child: products.getByRole(\"heading\", ...).",
+        rubric: { requires: [{ pattern: /toHaveCount\(/, message: "Use toHaveCount() on the product list." }] }
       },
       {
-        title: "Filter by a child element",
-        goal: "Assert that exactly 3 products on the first page carry a \"Sale\" badge, using filter({ has }).",
+        title: "Sale and not on sale",
+        goal: "Of the 8 products on the first page, exactly 3 carry the \"Sale\" badge and exactly 5 do not. Express \"has the badge\" and \"doesn't have it\" with filter, not with two separate hand-written selectors.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /has:\s*page\./, message: "Use filter({ has: page.… })." }] }
+        hint: "filter({ has: badge }) keeps cards that contain the badge, filter({ hasNot: badge }) keeps the others. Use exact matching so \"Sale\" doesn't match other text.",
+        rubric: {
+          requires: [
+            { pattern: /has:\s*/, message: "Use filter({ has }) for the sale cards." },
+            { pattern: /hasNot:\s*/, message: "Use filter({ hasNot }) for the cards without the badge." }
+          ]
+        }
       }
     ],
     concepts: ["Locator priority", "filter / chaining", "Strictness", "toHaveCount"],
@@ -88,7 +96,7 @@ Pick the matcher that states your intent: \`toBeDisabled()\` reads better than \
         title: "Checked state",
         goal: "Check \"Enable notifications\" and assert both toBeChecked() and the status \"Notifications enabled.\".",
         difficulty: "guided",
-        rubric: { requires: [{ pattern: /toBeChecked\(/, message: "Use toBeChecked()." }] }
+        rubric: { requires: [{ pattern: /toBeChecked\(/, message: "Use toBeChecked() for the checkbox." }] }
       },
       {
         title: "Disabled until valid",
@@ -96,16 +104,23 @@ Pick the matcher that states your intent: \`toBeDisabled()\` reads better than \
         difficulty: "independent",
         rubric: {
           requires: [
-            { pattern: /toBeDisabled\(|not\.toBeEnabled\(/, message: "Assert the initial disabled state." },
-            { pattern: /toHaveValue\(/, message: "Use toHaveValue() for the input." }
+            { pattern: /toBeDisabled\(/, message: "Use toBeDisabled() before the name is valid." },
+            { pattern: /toBeEnabled\(/, message: "Use toBeEnabled() once it is." }
           ]
         }
       },
       {
         title: "Soft list assertions",
-        goal: "Add the tags playwright, testing and qa. With expect.soft, assert the Tags list has 3 items, their texts in order, and the counter \"3 tags\".",
+        goal: "Add the tags playwright, testing and qa, then try to add \"qa\" a second time. With expect.soft prove all of it at once: the tags in order, the counter \"3 tags\", and that the duplicate was refused with the message \"qa\" already exists.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /expect\.soft\(/, message: "Use expect.soft()." }] }
+        hint: "toHaveText([...]) checks the count and the text of every item in order. With expect.soft a failing check doesn't stop the rest, so one run reports every problem.",
+        bugs: ["The third tag is dropped", "Duplicate tags are accepted", "The counter is off by one"],
+        rubric: {
+          requires: [
+            { pattern: /expect\.soft\(/, message: "Use expect.soft() so every problem is reported in one run." },
+            { pattern: /toHaveText\(\s*\[/, message: "Assert the tags with toHaveText([...])." }
+          ]
+        }
       }
     ],
     concepts: ["Retrying matchers", "Negative assertions", "expect.soft", "expect.poll"],
@@ -147,7 +162,7 @@ expect(await page.locator(".review").count()).toBe(3);`,
         title: "Wait for the catalog",
         goal: "Open /shop and assert that 8 product articles appear and that \"Loading products...\" is hidden.",
         difficulty: "guided",
-        rubric: { requires: [{ pattern: /toBeHidden\(|not\.toBeVisible\(/, message: "Assert the loading text disappears." }] }
+        rubric: { requires: [{ pattern: /toHaveCount\(/, message: "Wait for the products with toHaveCount()." }] }
       },
       {
         title: "Lazy reviews",
@@ -155,12 +170,14 @@ expect(await page.locator(".review").count()).toBe(3);`,
         difficulty: "independent"
       },
       {
-        title: "Click when enabled",
-        goal: "On the same product page click \"Add to cart\" (disabled while stock is checked) and assert the header link shows \"Cart (1)\". Don't add any waits.",
+        title: "Replace the sleeps",
+        goal: "The starter adds the kettlebell to the cart by sleeping and reading text once. It passes, but it is slow and fragile. Rewrite it without any sleep or snapshot read: let click() wait for the button to become enabled and let an assertion wait for the new cart count.",
         difficulty: "challenge",
+        hint: "click() waits until the button is visible, stable and enabled. toHaveText() retries until the cart link says \"Cart (1)\".",
         rubric: {
           forbids: [
-            { pattern: /waitForSelector|waitForFunction/, message: "No manual waits: click() auto-waits." },
+            { pattern: /waitForTimeout|waitForSelector|waitForFunction/, message: "No manual waits: click() and expect() wait for you." },
+            { pattern: /textContent\(|innerText\(|isEnabled\(|isVisible\(/, message: "Reading once doesn't retry. Use a web-first assertion." },
             { pattern: /force:\s*true/, message: "Do not force the click." }
           ]
         }
@@ -203,20 +220,27 @@ await expect(page.getByText("Preferences saved.")).toBeVisible();`,
     target: "/play/09-toast",
     practices: [
       {
-        title: "Toast appears",
-        goal: "Click \"Save preferences\" and assert the toast text \"Preferences saved.\".",
-        difficulty: "guided"
+        title: "Toast appears, then closes",
+        goal: "Click \"Save preferences\" and prove two things about the toast: it says \"Preferences saved.\", and it goes away on its own.",
+        difficulty: "guided",
+        bugs: ["No toast appears", "The toast never closes"],
+        rubric: { requires: [{ pattern: /toBeHidden\(|toHaveCount\(\s*0\s*\)|not\.toBeVisible\(/, message: "Assert that the toast goes away." }] }
       },
       {
-        title: "Toast disappears",
-        goal: "Assert that the same toast is visible and then hidden again.",
+        title: "Stacked toasts in order",
+        goal: "\"Send 3 emails\" shows three toasts one after another. Prove that all three are on screen together, in the order they were sent: Email 1 sent., Email 2 sent., Email 3 sent..",
         difficulty: "independent",
-        rubric: { requires: [{ pattern: /toBeHidden\(/, message: "Use toBeHidden()." }] }
+        hint: "One locator that matches every toast plus toHaveText([...]) checks the count and the order in a single retrying assertion.",
+        bugs: ["Only two emails are reported", "The emails are reported in reverse order"],
+        rubric: { requires: [{ pattern: /toHaveText\(\s*\[/, message: "Assert the whole stack with toHaveText([...])." }] }
       },
       {
-        title: "Undo from a toast",
-        goal: "Click \"Delete draft\", click \"Undo\" in the toast, and assert the draft \"Weekly plan\" is visible again.",
-        difficulty: "challenge"
+        title: "Undo with a countdown",
+        goal: "Click \"Delete draft\". The toast reads \"Draft deleted. Undo in 4s\" and the number keeps counting down, so match only the part that doesn't change. Click \"Undo\" and prove the draft \"Weekly plan\" is back and the toast \"Draft restored.\" appeared.",
+        difficulty: "challenge",
+        hint: "An exact string will flake because the countdown changes every second. A regular expression such as /^Draft deleted\\./ or toContainText() matches the stable part.",
+        bugs: ["Undo doesn't restore the draft", "No \"Draft restored.\" toast"],
+        rubric: { requires: [{ pattern: /toContainText\(|toHaveText\(\s*\/|toHaveText\(\s*new RegExp/, message: "Match the stable part of the countdown text (regular expression or toContainText)." }] }
       }
     ],
     concepts: ["Transient UI", "ARIA live regions", "toBeHidden"],
