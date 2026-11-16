@@ -1,5 +1,5 @@
 # Lesson 16 — API testing
-# Check the products endpoint, seed a cart through the API, and verify login
+# Check the products contract, seed a cart through the API, and pin down the
 # error responses.
 #
 # Copy this file to tests/solutions/ before editing, then run:
@@ -9,20 +9,22 @@ from playwright.sync_api import APIRequestContext, Page, expect
 
 
 def test_practice_1_get_and_assert_json(api_request_context: APIRequestContext):
-    # TODO (guided): GET /api/shop/products with api_request_context.get().
-    # Assert status 200, total 12, and that some item is named "Steel Kettlebell".
-    # Hint: assert any(item["name"] == ... for item in body["items"])
+    # TODO (guided): GET the product list with api_request_context.get(). Prove
+    # the contract: success status, the right total, and that the Steel
+    # Kettlebell is in it.
     pass
 
 
 def test_practice_2_seed_via_api_verify_in_ui(page: Page):
-    # TODO (independent): POST {"productId": "yoga-mat", "quantity": 2} to
-    # /api/shop/cart with page.request (it shares cookies with page!), then open
-    # /shop/cart and assert quantity 2 and the total "$58.00".
+    # TODO (independent): put two Yoga Mats in the cart with page.request (it
+    # shares cookies with the page, api_request_context does not!), then open
+    # the cart page and prove the UI shows that quantity and the matching total.
     pass
 
 
-def test_practice_3_negative_api_test(api_request_context: APIRequestContext):
-    # TODO (challenge): POST wrong credentials to /api/shop/login → 401 and
-    # {"error": "Invalid username or password."}; student / playwright → 200.
+def test_practice_3_negative_contract(api_request_context: APIRequestContext):
+    # TODO (challenge): a wrong password, an unknown product added to the cart,
+    # and a product page for an unknown id each answer with their own status and
+    # error body: assert all three. Then assert a valid login and a real
+    # product are OK (expect(response).to_be_ok()) and have the right shape.
     pass

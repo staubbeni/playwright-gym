@@ -1,6 +1,6 @@
 # Lesson 15 — Network mocking
-# Render a mocked catalog, show the error state for a 500, and display a
-# free product.
+# Render a mocked catalog, drive three failure states, and prove what the page
+# sends to the API.
 #
 # Copy this file to tests/solutions/ before editing, then run:
 #   pytest tests/solutions/15_network_mocking_test.py
@@ -9,19 +9,22 @@ from playwright.sync_api import Page, expect
 
 
 def test_practice_1_fulfill_with_json(page: Page):
+    # TODO (guided): answer the products API yourself so the catalog shows exactly
+    # one product, "Mocked Dumbbell". Prove that's all the page shows.
+    # Register the route BEFORE page.goto("/shop").
     page.goto("/shop")
-    # TODO (guided): Mock the products API (page.route BEFORE page.goto) with
-    # one product named "Mocked Dumbbell" and assert that exactly one article
-    # with that name is shown.
 
 
-def test_practice_2_server_error(page: Page):
+def test_practice_2_three_failure_states(page: Page):
+    # TODO (independent): prove the page's reaction to (1) a 500 response, (2) a
+    # network failure, and (3) an empty list.
+    # Hint: a later page.route() for the same URL wins, so re-route and reload.
     page.goto("/shop")
-    # TODO (independent): Fulfill the products API with status 500 and assert
-    # the alert "Could not load products. Please try again.".
 
 
-def test_practice_3_modify_a_real_response(page: Page):
+def test_practice_3_patch_a_response_check_the_request(page: Page):
+    # TODO (challenge): use route.fetch() to make the first item's price 0 and
+    # prove the page shows it as free. Then type "mat" in the search box and
+    # prove the page asked the API for that query (page.expect_request, opened
+    # BEFORE the typing) and that the free item is still shown.
     page.goto("/shop")
-    # TODO (challenge): Use route.fetch() and set the first item's price to 0.
-    # Assert that the product shows the price "Free".

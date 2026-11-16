@@ -164,13 +164,14 @@ await expect(page.getByText("Payment window")).toBeVisible(); // wrong page`,
     learningGoals: [
       "Fulfill a request with your own JSON.",
       "Simulate server errors to test error UI.",
-      "Patch a real response with route.fetch()."
+      "Patch a real response with route.fetch().",
+      "Prove which request the page made with waitForRequest()."
     ],
     theory: `\`page.route(url, handler)\` intercepts matching requests. Register it **before** the page makes the request, usually before \`goto\`. In the handler you can \`route.fulfill({ json })\` to answer yourself, \`route.abort()\` to simulate a network failure, or \`route.fetch()\` to get the real response and change it.
 
 Mocking makes edge cases deterministic: an empty list, a 500 error, or a product that costs nothing. The Gym Shop catalog calls \`GET /api/shop/products\`, which returns \`{ items: [{ id, name, price, category, sale }], total, page, pages }\`.
 
-Use a glob like \`"**/api/shop/products*"\` so query strings still match. \`page.waitForResponse\` lets you wait for a specific call when you need its timing.`,
+Use a glob like \`"**/api/shop/products*"\` so query strings still match. \`page.waitForRequest\` and \`page.waitForResponse\` wait for a specific call, so you can check what the page *sent* (for example the search query), not just what it displays. Register the wait **before** the action that triggers the call.`,
     goodExample: `await page.route("**/api/shop/products*", (route) =>
   route.fulfill({ json: { items: [...], total: 1, page: 1, pages: 1 } }));`,
     badExample: `// Hoping the real backend returns the edge case you want to test`,
@@ -179,25 +180,35 @@ Use a glob like \`"**/api/shop/products*"\` so query strings still match. \`page
       "Mocking so much that the test only tests the mock.",
       "Not asserting that the UI actually used the mocked data."
     ],
-    mission: "Render a mocked catalog, show the error state for a 500, and display a free product.",
+    mission: "Render a mocked catalog, drive three failure states, and prove what the page sends to the API.",
     target: "/shop",
     practices: [
       {
         title: "Fulfill with JSON",
-        goal: "Mock the products API with one product named \"Mocked Dumbbell\" and assert that exactly one article with that name is shown.",
+        goal: "Make the catalog show exactly one product, \"Mocked Dumbbell\", by answering the products API yourself, and prove that's all the page shows.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /route\.fulfill\(/, message: "Use route.fulfill()." }] }
       },
       {
-        title: "Server error",
-        goal: "Fulfill the products API with status 500 and assert the alert \"Could not load products. Please try again.\".",
-        difficulty: "independent"
+        title: "Three failure states",
+        goal: "Drive the catalog into three states and prove each one: the server answers 500 (the error alert), the network request fails outright, and the list comes back empty (the empty-state message).",
+        difficulty: "independent",
+        hint: "A later page.route() for the same URL wins over an earlier one, so you can re-route and reload inside one test.",
+        rubric: { requires: [{ pattern: /route\.abort\(/, message: "Simulate the network failure with route.abort()." }] },
+        bugs: ["A 500 response is shown as an empty list", "A network failure is shown as an empty list", "An empty list shows no message"]
       },
       {
-        title: "Modify a real response",
-        goal: "Use route.fetch() and set the first item's price to 0. Assert that the product shows the price \"Free\".",
+        title: "Patch a response, check the request",
+        goal: "Take the real products response, change the first item's price to 0 and prove the page shows it as free. Then type \"mat\" in the search box and prove the page really asked the API for that query, and that the free item is still shown.",
         difficulty: "challenge",
-        rubric: { requires: [{ pattern: /route\.fetch\(/, message: "Use route.fetch()." }] }
+        hint: "Start waiting for the request before the action that causes it: `const request = page.waitForRequest(...)`, act, then `await request`.",
+        rubric: {
+          requires: [
+            { pattern: /route\.fetch\(/, message: "Use route.fetch() to patch the real response." },
+            { pattern: /waitForRe(quest|sponse)\(/, message: "Use page.waitForRequest() or page.waitForResponse() to check the call." }
+          ]
+        },
+        bugs: ["A free product is shown as $0.00", "The search text is never sent to the API"]
       }
     ],
     concepts: ["page.route", "fulfill / abort / fetch", "Error states"],
@@ -216,7 +227,8 @@ Use a glob like \`"**/api/shop/products*"\` so query strings still match. \`page
     learningGoals: [
       "Send requests with the request fixture.",
       "Seed state via API, then verify it in the UI.",
-      "Assert status codes and JSON bodies."
+      "Assert status codes and JSON bodies.",
+      "Test the error contract: 400 vs 401 vs 404."
     ],
     theory: `The \`request\` fixture is an HTTP client that uses \`baseURL\` and sends no browser. It's ideal for API tests: \`const res = await request.get("/api/shop/products"); expect(res.status()).toBe(200);\`.
 
@@ -231,25 +243,28 @@ await page.goto("/shop/cart");`,
       "Only checking the status code and ignoring the body.",
       "Testing only the happy path of an endpoint."
     ],
-    mission: "Check the products endpoint, seed a cart through the API, and verify login error responses.",
+    mission: "Check the products contract, seed a cart through the API, and pin down the error responses.",
     target: "/api/shop/products",
     practices: [
       {
         title: "GET and assert JSON",
-        goal: "GET /api/shop/products, assert status 200, total 12, and that some item is named \"Steel Kettlebell\".",
+        goal: "Ask the API for the product list and prove the contract: success status, the right total, and that the Steel Kettlebell is part of it.",
         difficulty: "guided",
         rubric: { requires: [{ pattern: /request\.get\(/, message: "Use request.get()." }] }
       },
       {
         title: "Seed via API, verify in UI",
-        goal: "POST {productId: \"yoga-mat\", quantity: 2} to /api/shop/cart with page.request, open /shop/cart, and assert the quantity 2 and total \"$58.00\".",
+        goal: "Put two Yoga Mats in the cart through the API (not by clicking), then open the cart page and prove the UI shows that quantity and the matching total.",
         difficulty: "independent",
         rubric: { requires: [{ pattern: /page\.request\.post\(/, message: "Seed with page.request so the cookie is shared." }] }
       },
       {
-        title: "Negative API test",
-        goal: "POST wrong credentials to /api/shop/login and assert 401 with error \"Invalid username or password.\". Then assert student/playwright returns 200.",
-        difficulty: "challenge"
+        title: "Negative contract",
+        goal: "Pin down how the API says no. A wrong password, an unknown product added to the cart, and a product page for an id that doesn't exist each get their own status and error body. Prove all three, and that a valid login and a real product are OK with the right shape.",
+        difficulty: "challenge",
+        hint: "`expect(response).toBeOK()` is the positive check; `expect(await response.json()).toMatchObject({ ... })` checks a shape without listing every field.",
+        rubric: { requires: [{ pattern: /toBeOK\(/, message: "Use expect(response).toBeOK() for the success cases." }] },
+        bugs: ["A wrong password is accepted", "An unknown product is accepted into the cart", "A missing product answers 200 instead of 404"]
       }
     ],
     concepts: ["request fixture", "page.request", "API seeding"],
@@ -268,9 +283,11 @@ await page.goto("/shop/cart");`,
     learningGoals: [
       "Test the login and logout boundary.",
       "Save cookies and localStorage with storageState().",
-      "Start a new context that is already logged in."
+      "Start tests that are already logged in, and others that are explicitly logged out."
     ],
     theory: `Logging in through the UI in every test is slow. Instead, log in once (via UI or API), save the context state with \`context.storageState({ path })\`, and start other contexts from it: \`browser.newContext({ storageState: path })\`.
+
+Within one file, \`test.beforeAll\` can log in once and \`test.use({ storageState: path })\` makes a \`test.describe\` group start logged in; another group can opt out with an empty state, so both sides of the boundary are covered.
 
 In a real suite this happens in a **setup project**: \`auth.setup.ts\` logs in and writes \`playwright/.auth/user.json\`, and other projects declare \`dependencies: ["setup"]\` and \`use: { storageState: "playwright/.auth/user.json" }\`.
 
@@ -283,29 +300,33 @@ await page.context().storageState({ path: statePath });`,
       "Never testing logout.",
       "Sharing one logged-in page between tests instead of one storage state."
     ],
-    mission: "Log in through the form, prove that sign-out ends the session, and reuse a saved session in a fresh context.",
+    mission: "Log in through the form, prove that sign-out ends the session, and share one saved login across a logged-in and a logged-out group.",
     target: "/shop/login",
     practices: [
       {
         title: "Log in through the UI",
-        goal: "Sign in as student / playwright and assert the URL /shop/account, the heading \"My account\", and \"Signed in as student\".",
+        goal: "Use the login form with the demo account and prove you end up signed in on your account page.",
         difficulty: "guided"
       },
       {
         title: "Sign out ends the session",
-        goal: "After logging in click \"Sign out\", then open /shop/account and assert you land on /shop/login.",
-        difficulty: "independent"
+        goal: "Sign in, sign out, and prove the session is really over: the account page must no longer be reachable.",
+        difficulty: "independent",
+        hint: "Don't trust the redirect after the click alone: open the protected page again afterwards."
       },
       {
-        title: "Reuse storage state",
-        goal: "Log in via page.request, save storageState to test.info().outputPath(\"state.json\"), create a new context from it, and assert that /shop/account shows \"Signed in as student\".",
+        title: "Log in once, share the session",
+        goal: "In a `beforeAll`, log in through the API and save the session with storageState. Then make one file hold two groups: a test that starts logged in from that saved state, and a test that is explicitly logged out and is sent to the login page.",
         difficulty: "challenge",
+        hint: "`test.use({ storageState })` is read when tests are collected, so give it a fixed path like `test-results/auth/state.json`. A context made in `beforeAll` inherits the group's `storageState` too, so give it an empty one. A logged-out group can use `test.use({ storageState: { cookies: [], origins: [] } })`.",
         rubric: {
           requires: [
-            { pattern: /storageState\(/, message: "Save the state with storageState()." },
-            { pattern: /newContext\(\s*\{[\s\S]*storageState/, message: "Create a context with storageState." }
+            { pattern: /beforeAll\(/, message: "Log in once in test.beforeAll()." },
+            { pattern: /storageState\(/, message: "Save the state with context.storageState()." },
+            { pattern: /test\.use\([\s\S]*test\.use\(/, message: "Use test.use({ storageState }) in both groups." }
           ]
-        }
+        },
+        bugs: ["The login cookie is not sent to the account page", "A logged-out visitor is shown someone else's account"]
       }
     ],
     concepts: ["Storage state", "Setup projects", "Session boundaries"],

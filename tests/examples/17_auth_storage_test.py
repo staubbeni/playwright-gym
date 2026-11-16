@@ -1,5 +1,6 @@
 import re
 
+import pytest
 from playwright.sync_api import Browser, Page, expect
 
 
@@ -24,13 +25,25 @@ def test_practice_2_signing_out_ends_the_session(page: Page):
     expect(page).to_have_url(re.compile(r"/shop/login"))
 
 
-def test_practice_3_reuses_a_saved_storage_state(page: Page, browser: Browser, tmp_path):
-    page.request.post("/api/shop/login", data={"username": "student", "password": "playwright"})
-    state_path = tmp_path / "state.json"
-    page.context.storage_state(path=state_path)
-
-    context = browser.new_context(storage_state=state_path)
-    restored = context.new_page()
-    restored.goto("/shop/account")
-    expect(restored.get_by_text("Signed in as student")).to_be_visible()
+@pytest.fixture(scope="module")
+def state_path(browser: Browser, tmp_path_factory):
+    path = tmp_path_factory.mktemp("auth") / "state.json"
+    context = browser.new_context()
+    context.request.post("/api/shop/login", data={"username": "student", "password": "playwright"})
+    context.storage_state(path=path)
     context.close()
+    return path
+
+
+def test_practice_3_the_saved_session_opens_the_account(browser: Browser, state_path):
+    context = browser.new_context(storage_state=state_path)
+    page = context.new_page()
+    page.goto("/shop/account")
+    expect(page.get_by_text("Signed in as student")).to_be_visible()
+    context.close()
+
+
+def test_practice_3_a_visitor_without_a_session_is_sent_to_the_login_page(page: Page, state_path):
+    page.goto("/shop/account")
+    expect(page).to_have_url(re.compile(r"/shop/login"))
+    expect(page.get_by_text("Signed in as")).to_have_count(0)

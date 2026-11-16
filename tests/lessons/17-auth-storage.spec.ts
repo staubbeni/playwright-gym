@@ -1,6 +1,6 @@
 // Lesson 17 — Authentication & storage state
-// Log in through the form, prove that sign-out ends the session, and reuse a
-// saved session in a fresh context.
+// Log in through the form, prove that sign-out ends the session, and share one
+// saved login across a logged-in and a logged-out group.
 //
 // Copy this file to tests/solutions/ before editing, then run:
 //   npm run check -- 17-auth-storage
@@ -8,19 +8,27 @@ import { expect, test } from "@playwright/test";
 
 test("practice 1: log in through the ui", async ({ page }) => {
   await page.goto("/shop/login");
-  // TODO (guided): sign in as student / playwright. Assert the URL ends with
-  // /shop/account, the heading "My account", and "Signed in as student".
+  // TODO (guided): sign in with the demo account shown on the page and prove you
+  // end up signed in on your account page.
 });
 
 test("practice 2: sign out ends the session", async ({ page }) => {
-  // TODO (independent): log in (UI or page.request), click "Sign out", then
-  // open /shop/account again and assert you end up on /shop/login.
+  // TODO (independent): sign in (UI or page.request), sign out, and prove the
+  // session is really over: the account page must no longer be reachable.
 });
 
-test("practice 3: reuse storage state", async ({ page, browser }) => {
-  // TODO (challenge):
-  // 1. Log in with page.request.post("/api/shop/login", { data: { ... } }).
-  // 2. Save page.context().storageState({ path: test.info().outputPath("state.json") }).
-  // 3. browser.newContext({ storageState: ... }), open /shop/account there,
-  //    and assert "Signed in as student". Close the new context at the end.
+// TODO (challenge): replace this skeleton.
+// 1. A describe group "practice 3: logged in": test.beforeAll logs in with
+//    context.request (beforeAll has no `request` fixture: make a context from
+//    `browser`), saves context.storageState({ path }), and test.use({ storageState: path })
+//    starts the group's test logged in. test.use is read at collection time, so
+//    use a constant path like "test-results/auth/state.json". The context made in
+//    beforeAll inherits that storageState too (not written yet), so create it with
+//    browser.newContext({ storageState: { cookies: [], origins: [] } }).
+// 2. A describe group "practice 3: logged out": test.use({ storageState: { cookies: [], origins: [] } })
+//    and a test that proves /shop/account sends the visitor to the login page.
+test.describe("practice 3: logged in", () => {
+  test("practice 3: the saved session opens the account", async ({ page }) => {
+    await page.goto("/shop/account");
+  });
 });
