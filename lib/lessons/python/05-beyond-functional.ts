@@ -17,13 +17,24 @@ Visual tests catch what functional assertions miss (colors, spacing, overlap) bu
     badExample: `assert_snapshot(page, "page.png")  # includes a live clock`,
     practices: [
       {
-        goal: "Call `assert_snapshot(locator, \"pricing-card.png\")` on the pricing-card test id.",
+        goal: "Guard the pricing card with `assert_snapshot(locator, \"pricing-card.png\")`. The first run writes the baseline and fails: run again.",
         rubric: { requires: [{ pattern: /assert_snapshot\(/, message: "Use the assert_snapshot fixture." }] }
       },
-      { rubric: { requires: [{ pattern: /mask\s*=\s*\[/, message: "Mask the dynamic element." }] } },
       {
-        goal: "Snapshot the whole page with full_page=True, animations disabled and live-stats masked.",
-        rubric: { requires: [{ pattern: /animations\s*=\s*["']disabled["']/, message: "Disable animations." }] }
+        goal: "Guard the dashboard header with a snapshot. It contains live numbers that change every second, so the test must pass on every run without hiding the rest of the header.",
+        hint: "Pass the changing element as `mask=[locator]`. The mask paints a solid box over it.",
+        rubric: { requires: [{ pattern: /mask\s*=\s*\[/, message: "Mask the dynamic element." }] }
+      },
+      {
+        goal: "The starter's full-page snapshot test is flaky. Run it a few times and find out why (two things move on this page), then stabilize it so it passes every time and still fails when the plan name changes. If you add a tolerance, explain it in a comment.",
+        hint: "An endless animation never settles, and live text never matches the baseline. Freeze one, mask the other. `max_diff_pixels` is only for tiny anti-aliasing noise: a big value hides real changes.",
+        rubric: {
+          requires: [
+            { pattern: /animations\s*=\s*["']disabled["']/, message: "Disable animations." },
+            { pattern: /mask\s*=\s*\[/, message: "Mask the live data." }
+          ],
+          forbids: [{ pattern: /max_diff_pixels\s*=\s*\d{3,}/, message: "A tolerance this large would hide a changed plan name." }]
+        }
       }
     ]
   },
@@ -31,9 +42,29 @@ Visual tests catch what functional assertions miss (colors, spacing, overlap) bu
     goodExample: `expect(page.get_by_label("Contact email")).to_have_accessible_description("Contact email is required.")`,
     badExample: `expect(page.locator(".error")).to_be_visible()  # visible ≠ announced`,
     practices: [
-      { rubric: { requires: [{ pattern: /to_match_aria_snapshot\(/, message: "Use to_match_aria_snapshot()." }] } },
-      { rubric: { requires: [{ pattern: /to_be_focused\(/, message: "Use to_be_focused()." }] } },
-      { rubric: { requires: [{ pattern: /to_have_accessible_description\(/, message: "Use to_have_accessible_description()." }] } }
+      {
+        rubric: { requires: [{ pattern: /to_match_aria_snapshot\(/, message: "Use to_match_aria_snapshot()." }] }
+      },
+      {
+        hint: "`to_be_focused()` is a web-first assertion. Assert it twice: once on the field inside the dialog, once on the button that opened it.",
+        rubric: {
+          requires: [
+            { pattern: /to_be_focused\(/, message: "Use to_be_focused()." },
+            { pattern: /Escape[\s\S]*to_be_focused\(/, message: "Assert focus again after pressing Escape." }
+          ]
+        }
+      },
+      {
+        hint: "Error text that appears is only announced when it is a live region (role \"alert\"); Next.js adds an empty alert of its own, so narrow yours down by text. `to_have_attribute(\"aria-invalid\", ...)` and `to_have_accessible_description()` cover the rest.",
+        rubric: {
+          requires: [
+            { pattern: /to_have_accessible_description\(/, message: "Use to_have_accessible_description()." },
+            { pattern: /aria-invalid/, message: "Check aria-invalid." },
+            { pattern: /get_by_role\(\s*["']alert["']/, message: "Find the announced errors with get_by_role(\"alert\")." }
+          ],
+          forbids: [{ pattern: /get_by_test_id\(|\.locator\(|get_by_text\(/, message: "Use roles and labels only: that is how assistive technology finds things." }]
+        }
+      }
     ]
   },
   "24-emulation-clock": {
@@ -53,14 +84,31 @@ def test_formats_prices(page: Page): ...`,
     badExample: `# A test that only passes before noon on the developer's laptop`,
     practices: [
       {
-        goal: "Set the fixed time to `datetime(2026, 3, 1, 8, 0)`, open the page, and assert the greeting \"Good morning\".",
+        goal: "Pin the browser's clock to 08:00 on 1 March 2026 and prove the greeting for that time. The clock must be set before the page loads.",
         rubric: { requires: [{ pattern: /page\.clock\./, message: "Use page.clock." }] }
       },
       {
-        goal: "With `@pytest.mark.browser_context_args(locale=\"de-DE\", timezone_id=\"Europe/Berlin\")` assert the price matches `re.compile(r\"1\\.234,50\")` and the event time is \"14:00\".",
-        rubric: { requires: [{ pattern: /locale\s*=\s*["']de-DE["']/, message: "Emulate the de-DE locale." }] }
+        goal: "Pretend the visitor is in Berlin with a German browser. Prove the membership price uses German formatting (1.234,50) and that the event, which is 12:00 UTC, shows Berlin's local time. Set the environment with a mark on the test, not in the middle of it.",
+        hint: "`@pytest.mark.browser_context_args(locale=..., timezone_id=...)`. The price contains a non-breaking space: match it with a regex.",
+        rubric: {
+          requires: [
+            { pattern: /locale\s*=\s*["']de-DE["']/, message: "Emulate the de-DE locale." },
+            { pattern: /timezone_id\s*=\s*["']Europe\/Berlin["']/, message: "Emulate the Berlin timezone." }
+          ]
+        }
       },
-      { rubric: { requires: [{ pattern: /geolocation\s*=/, message: "Emulate geolocation." }] } }
+      {
+        goal: "As a phone user (390×844) in Budapest (47.4979, 19.0402), prove the mobile menu button exists and the nearest gym is found. Then prove the session timeout: the page warns about inactivity, so check the expiry notice is NOT shown just before the limit, IS shown right after it, and that \"Stay signed in\" restarts the countdown. Never wait in real time.",
+        hint: "The notice is a role \"alert\" (Next.js adds an empty one too: filter by text). `page.clock.install()` before `goto`, then `page.clock.fast_forward(\"14:00\")`. The countdown starts when the page hydrates, so wait for something the page fills in before you fast-forward. Fast-forwarding in two steps tests both sides of the limit. After clicking \"Stay signed in\", run the same two checks again. Geolocation needs `permissions=[\"geolocation\"]`.",
+        rubric: {
+          requires: [
+            { pattern: /geolocation\s*=/, message: "Emulate geolocation." },
+            { pattern: /clock\.install\(/, message: "Install the fake clock with page.clock.install()." },
+            { pattern: /fast_forward\(/, message: "Jump time forward with fast_forward()." }
+          ],
+          forbids: [{ pattern: /wait_for_timeout\(/, message: "Never wait in real time: fast-forward the clock." }]
+        }
+      }
     ]
   }
 };

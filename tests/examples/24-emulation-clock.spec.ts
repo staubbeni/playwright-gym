@@ -29,4 +29,25 @@ test.describe("practice 3: phone in Budapest", () => {
     await page.getByRole("button", { name: "Find nearest gym" }).click();
     await expect(page.getByTestId("nearest-gym")).toHaveText("Nearest gym: Budapest Central");
   });
+
+  test("warns about session timeout", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/play/24-emulation-clock");
+    const expired = page.getByRole("alert").filter({ hasText: "Session expired" });
+    // The countdown starts once the page has hydrated: wait for a sign of it.
+    await expect(page.getByTestId("greeting")).not.toBeEmpty();
+
+    await page.clock.fastForward("14:00");
+    await expect(expired).toBeHidden();
+    await page.clock.fastForward("01:00");
+    await expect(expired).toHaveText(/Session expired/);
+
+    // Staying signed in restarts the full countdown.
+    await page.getByRole("button", { name: "Stay signed in" }).click();
+    await expect(expired).toBeHidden();
+    await page.clock.fastForward("14:00");
+    await expect(expired).toBeHidden();
+    await page.clock.fastForward("01:00");
+    await expect(expired).toBeVisible();
+  });
 });
