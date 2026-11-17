@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { lessons } from "../../lib/lessons/index.ts";
 
+// Keep a real .gym-progress.json (written by npm run check) out of these tests.
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/progress", (route) => route.fulfill({ json: {} }));
+});
+
 test("the home page lists every module and lesson", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Playwright Gym" })).toBeVisible();
@@ -41,6 +46,20 @@ test("practice progress is remembered", async ({ page }) => {
   await page.reload();
   await expect(page.locator("#lesson-instructions").getByRole("checkbox", { name: "Mark as done" }).first()).toBeChecked();
   await expect(page.getByRole("navigation", { name: "Lessons" }).getByLabel("1 of 3 practices done")).toBeVisible();
+});
+
+test("practices the checker verified are ticked and count as started", async ({ page }) => {
+  await page.route("**/api/progress", (route) =>
+    route.fulfill({ json: { "03-selectors:1": { language: "ts", at: "2026-01-01T00:00:00.000Z" } } })
+  );
+  await page.goto("/lessons/03-selectors");
+  const verified = page.locator("#lesson-instructions").getByRole("checkbox", { name: "Verified by npm run check" });
+  await expect(verified).toBeChecked();
+  await expect(verified).toBeDisabled();
+  await expect(page.locator("#lesson-instructions").getByRole("checkbox", { name: "Mark as done" })).toHaveCount(2);
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /Continue with lesson 01/ })).toBeVisible();
 });
 
 test("every lesson page and playground renders", async ({ page }) => {

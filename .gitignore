@@ -40,3 +40,6 @@ tests/examples/*-snapshots/
 .venv/
 __pycache__/
 tests/**/__snapshots__/
+
+# Practices the checker has verified (shown as ticked on the lesson page)
+.gym-progress.json

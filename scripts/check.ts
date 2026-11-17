@@ -8,7 +8,7 @@
 // For each practice N the checker runs the spec normally (practice N must
 // pass) and again with the bug flag "<id>:N" active (practice N must fail).
 // A practice that stays green with its bug switched on is a false positive.
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
@@ -24,6 +24,27 @@ const port = Number(process.env.PORT ?? 3000);
 const baseURL = `http://127.0.0.1:${port}`;
 
 type PracticeResult = { name: string; ok: boolean; notes: string[] };
+
+// Practices that pass are recorded here so the lesson page can tick them
+// (see app/api/progress). A later failing run un-ticks the practice. Reference
+// examples are not the learner's progress, so they never write.
+const progressFile = resolve(root, process.env.GYM_PROGRESS_FILE ?? ".gym-progress.json");
+
+function recordProgress(lessonId: string, outcomes: boolean[]) {
+  if (useExamples) return;
+  let saved: Record<string, { language: string; at: string }> = {};
+  try {
+    saved = JSON.parse(readFileSync(progressFile, "utf8"));
+  } catch {
+    // First run: start a new file.
+  }
+  outcomes.forEach((ok, index) => {
+    const key = `${lessonId}:${index + 1}`;
+    if (ok) saved[key] = { language: usePython ? "python" : "ts", at: new Date().toISOString() };
+    else delete saved[key];
+  });
+  writeFileSync(progressFile, `${JSON.stringify(saved, null, 2)}\n`);
+}
 
 function usage(message: string): never {
   console.error(`\n❌ ${message}\n\nUsage: npm run check -- <lesson-id> [--examples] [--python]\n       npm run check -- --all --examples [--python]`);
@@ -368,6 +389,7 @@ function checkLesson(baseLesson: Lesson): boolean {
     return { name, ok: notes.length === 0, notes };
   });
 
+  recordProgress(lesson.id, results.map((result) => result.ok));
   console.log("");
   for (const result of results) {
     console.log(`  ${result.ok ? "✅" : "❌"} ${result.name}`);
@@ -388,12 +410,15 @@ function checkCapstone(lesson: Lesson, specPath: string, normal: RunResult, stat
   }
   console.log(`\n  ✅ ${normal.tests.length} tests pass against the normal app.\n`);
   let caught = 0;
+  const outcomes: boolean[] = [];
   lesson.practices.forEach((practice, index) => {
     const mutated = run(specPath, { bug: `${lesson.id}:${index + 1}` });
     const hit = mutated.tests.some((test) => !test.passed);
     if (hit) caught += 1;
+    outcomes.push(hit);
     console.log(`  ${hit ? "🎯 caught" : "🕳️  missed"}  bug ${index + 1}: ${practice.title}`);
   });
+  recordProgress(lesson.id, outcomes);
   const ok = caught >= minCaught && staticOk;
   console.log(`\n  ${ok ? "🏆" : "📋"} Caught ${caught}/${lesson.practices.length} planted bugs (goal: ${minCaught}).`);
   return ok;

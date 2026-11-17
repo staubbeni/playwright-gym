@@ -46,6 +46,11 @@ checker:
    told which one it missed: `Caught 1/3 planted bugs. Your test stays green
    when: "…"`.
 
+When a practice passes, `npm run check` also records it in the gitignored
+`.gym-progress.json`; the lesson page (served by `npm run dev`) then shows it
+as "Verified by npm run check" and the home page continues from there. A later
+failing run un-verifies the practice, and `--examples` runs never count.
+
 Practices ramp up: practice 1 is a quick win, practice 2 states an outcome
 and leaves the locators and assertions to you, and practice 3 either plants
 several bugs or ships a deliberately broken test for you to repair. Expect

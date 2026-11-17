@@ -38,7 +38,7 @@ export function PlaygroundShell({ lessonId }: { lessonId: string }) {
   const bug = useLessonBugs(lesson.id);
   const next = nextLesson(baseLesson);
   const Playground = playgrounds[lesson.id];
-  const { progress, toggle } = useProgress();
+  const { progress, verified, toggle } = useProgress();
   const [showInstructions, setShowInstructions] = useState(true);
   const [drawerWidth, setDrawerWidth] = useState(460);
   const resizing = useRef(false);
@@ -195,8 +195,17 @@ export function PlaygroundShell({ lessonId }: { lessonId: string }) {
                         <p><RichInline text={practice.goal} /></p>
                         <StuckLadder key={language} lessonId={lesson.id} practice={practice} language={language} />
                         <label className="checkbox-row">
-                          <input type="checkbox" checked={Boolean(progress[key])} onChange={() => toggle(key)} />
-                          Mark as done
+                          {verified[key] ? (
+                            <>
+                              <input type="checkbox" checked disabled readOnly />
+                              Verified by npm run check
+                            </>
+                          ) : (
+                            <>
+                              <input type="checkbox" checked={Boolean(progress[key])} onChange={() => toggle(key)} />
+                              Mark as done
+                            </>
+                          )}
                         </label>
                       </li>
                     );
