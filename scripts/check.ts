@@ -3,6 +3,7 @@
 //   npm run check -- <lesson-id>              checks tests/solutions/<id>.spec.ts
 //   npm run check -- <lesson-id> --examples   checks tests/examples/<id>.spec.ts
 //   npm run check -- --all --examples         checks every reference example
+//   add --starters to see how an untouched starter scores (a lesson-authoring aid)
 //   add --python to check the Python track (tests/{solutions,examples}/<id>_test.py)
 //
 // For each practice N the checker runs the spec normally (practice N must
@@ -13,11 +14,13 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import ts from "typescript";
+import { stripComments } from "./strip-comments.ts";
 import { getLesson, lessons, pythonFile, pythonLesson, type Lesson } from "../lib/lessons/index.ts";
 
 const root = process.cwd();
 const args = process.argv.slice(2);
 const useExamples = args.includes("--examples");
+const useStarters = args.includes("--starters");
 const checkAll = args.includes("--all");
 const usePython = args.includes("--python");
 const port = Number(process.env.PORT ?? 3000);
@@ -31,7 +34,7 @@ type PracticeResult = { name: string; ok: boolean; notes: string[] };
 const progressFile = resolve(root, process.env.GYM_PROGRESS_FILE ?? ".gym-progress.json");
 
 function recordProgress(lessonId: string, outcomes: boolean[]) {
-  if (useExamples) return;
+  if (useExamples || useStarters) return;
   let saved: Record<string, { language: string; at: string }> = {};
   try {
     saved = JSON.parse(readFileSync(progressFile, "utf8"));
@@ -297,6 +300,7 @@ function specPathFor(lesson: Lesson): string {
   const file = usePython ? pythonFile(lesson.id) : `${lesson.id}.spec.ts`;
   const examplePath = resolve(root, "tests", "examples", file);
   const solutionPath = resolve(root, "tests", "solutions", file);
+  if (useStarters) return resolve(root, "tests", "lessons", file);
   if (useExamples) {
     if (!existsSync(examplePath)) usage(`No reference example at tests/examples/${file}`);
     return examplePath;
@@ -335,7 +339,7 @@ function checkLesson(baseLesson: Lesson): boolean {
   const lesson = usePython ? pythonLesson(baseLesson) : baseLesson;
   const specPath = specPathFor(lesson);
   const relative = specPath.slice(root.length + 1);
-  const source = readFileSync(specPath, "utf8");
+  const source = stripComments(readFileSync(specPath, "utf8"), usePython);
   console.log(`\n${"=".repeat(64)}\n🔍 ${lesson.id} — ${lesson.title}\n   ${relative}\n${"=".repeat(64)}`);
 
   const { errors, warnings } = usePython ? staticFindingsPython(source) : staticFindings(specPath, source);

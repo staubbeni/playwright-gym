@@ -137,6 +137,7 @@ tested:
 ```bash
 npm run check -- 06-locator-strategy --examples   # one lesson
 npm run check:all -- --examples                     # every lesson, every bug
+npm run check -- <id> --starters                      # how an untouched starter scores (authoring aid)
 npm run check:all -- --examples --python            # the Python track
 ```
 
